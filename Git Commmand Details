@@ -1,0 +1,13 @@
+Git Commmand Details
+
+git status 
+to get untracked giles
+
+git log
+to get git commit details
+
+
+To edit the Commit author
+git commit --amend --reser author
+
+
