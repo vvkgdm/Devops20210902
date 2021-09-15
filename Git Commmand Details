@@ -10,4 +10,24 @@ to get git commit details
 To edit the Commit author
 git commit --amend --reser author
 
+TO remove from the locak repo:
+
+git reset --hard HEAD~2 [to remove last 2 commits]
+
+Rest:
+Git Reset only staging area changes and aswell local history only changes not history
+
+Revert:
+Revert deals with revert commits, relates to head
+
+Rebase:
+
+Deals with branch
+
+Restore:
+-------------
+We use this Git becasue we willl write Jenkins file (pipeline as a code)
+Terraform file
+Docker file
+That is the reason we need to know Git commands and also branching strategy 
 
