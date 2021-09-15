@@ -1,0 +1,11 @@
+Sonar Qube:
+SonarQube is an open source tool for quality system development. It is written in Java and supports multiple databases. It provides capabilities to continuously inspect code, show the health of an application, and highlight newly introduced issues. It contains code analyzers which are equipped to detect tricky issues. It also integrates easily with DevOps.
+
+MySQL No Longer Supported
+SonarQube no longer supports MySQL. To migrate from MySQL to a supported database, see the free MySQL Migrator tool.
+
+Java 11 Required
+The SonarQube server now requires Java 11
+
+
+Sonar Qube doesnt scan Source code it only scans the complied files

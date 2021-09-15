@@ -1,0 +1,26 @@
+Master/Main branch:
+Ready to deploy code and when project started branch is master/Main branch
+
+Develop/Development:
+Where from main branch they create a copy from the development branch and cloning the development branch to local by the developers, They create 
+their features and merge them in Develop/Development branch
+Feature branch name teriminlogy would be like this feature/feature_name or feature/feature_ticketID
+
+
+Versioning: like effort 1.2.12 [version 1 major release 2 small release 12 small issue fixes number]
+
+Release branch:
+Which is created from the Development/Develop branch which is called as start-release Build names will ending with snapshot 1.0-snapshot. Where here testing team will test the code and generally they will find the glicthes and development will done
+When testing team certified the release code they will merge it to MAin/Master branch which is called as finish-release Build names will ending with releases 1.0-releases
+After merging is done with main branch. When client gaves new requirement From the Release branch they merge to Development branch and starts their features
+
+Tag branch:
+This branch is created whenever a release is happens. No changes should be done in this branch serves as a backup
+
+
+HotFix:
+Which we create it whenever a hot fix needed to be done from the Master branch. When hot fix is done this will be merged to master branch and Development branch
+
+
+
+This is called as GitFlowbranching strategy

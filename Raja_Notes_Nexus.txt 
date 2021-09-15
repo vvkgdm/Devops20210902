@@ -1,0 +1,30 @@
+Nexus is Artifcat repository where as  it is free and paid and  JFrog is also Artifcat repository.
+Installing Nexus
+Min 1 cpu and 2 Gb ram
+Install JAVA 
+wget sonatype nexus
+adduser for nexus
+make it as service
+
+Default password and username
+username : admin
+password : you can find it /nexuslocation/sonatype-work/nexus3/admin.password
+
+we can use nexus maven repository
+Nexus UI:
+    repository: We can create whatever like Maven based repo etc
+    Blob stores: Show at where it is storing and how much space is it left (usually we can allot a new disk to it so that it wont fill up root disk)
+    Cleanup Polcies: When can we clean the old artifact
+    Content Selectors:
+    Properieatary Repositories:
+    Routing Rules: 
+
+Creating a Repository in Nexus:
+For Maven 3 types of repo are there group[multiple repos],proxy[Created in another server and placed in this nexus],hosted[In the nexus server]
+
+We create two type of repo's 1 for the snapshots
+                             1 fot the Releases
+We need to make maven to connect to nexus to the remote repository so that mvn dont need to conect public repo directly. It will connect to public via nexus
+For that we need to create repository group add the repositories in the settings {via UI} maven central maven public and other so that maven can connect to repositories via nexus not directly.
+
+

@@ -1,0 +1,147 @@
+Maven
+------
+1.) pom.xml where we keep all the build dependency detailsi Like (Clean plugin,deploy plugin.other plugins aswell and also to integrate the sonatype nexus artifact repository and also sonarqube code quality tool )
+2.) Need a specific directory to keep the code (/WE)
+3.) HAs a life cycle 
+WE only use maven just integrte nexus repository nd sonarqube
+
+A Build Lifecycle is Made Up of Phases
+Each of these build lifecycles is defined by a different list of build phases, wherein a build phase represents a stage in the lifecycle.For example, the default lifecycle comprises of the following phases (for a complete list of the lifecycle phases, refer to the Lifecycle Reference):
+validate - validate the project is correct and all necessary information is available
+compile - compile the source code of the project
+test - test the compiled source code using a suitable unit testing framework. These tests should not require the code be packaged or deployed
+package - take the compiled code and package it in its distributable format, such as a JAR.
+verify - run any checks on results of integration tests to ensure quality criteria are met
+install - install the package into the local repository, for use as a dependency in other projects locally
+deploy - done in the build environment, copies the final package to the remote repository for sharing with other developers and projects.
+
+
+To integrate Maven and  Nexus:
+
+In Pom.xml File we need to below files
+Note: id should same in settings.xml file as well
+<distributionManagement>
+        <repository>
+            <id>internalMavenReleaseRepository</id>
+            <name>Internal Maven Release Repository</name>
+            <url>${releases.distribution.url}</url>
+         </repository>
+         <snapshotRepository>
+            <id>internalMavenSnapshotRepository</id>
+            <name>Internal Snapshots Repository</name>
+            <url>${snapshots.distribution.url}</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+  </distributionManagement>
+
+
+  <properties>
+     <repository.server.root>http://localhost:8081/repository</repository.server.root> [dont include url directly we will specify url in settings.xml] 
+     <releases.distribution.url>
+        ${repository.server.root}/effort-releases/ #change here nexus repo name
+     </releases.distribution.url>
+     <snapshots.distribution.url>
+        ${repository.server.root}/effort-snapshots/ #change here nexus repo name
+     </snapshots.distribution.url>
+
+  </properties>
+
+
+In Settings.xml
+
+vi ~/.m2/settings.xml
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" 
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:gsp='http://groovy.codehaus.org/2005/gsp'
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <pluginGroups>
+
+  </pluginGroups>
+
+
+  <proxies>
+
+  </proxies>
+
+
+  <servers>
+  
+     <server>
+      <id>internalMavenSnapshotRepository</id>
+      <username>admin</username> #nexus credentials
+      <password>vivek@789</password> #nexus credentials
+    </server> 
+    <server>
+      <id>internalMavenReleaseRepository</id>
+      <username>admin</username>  #nexus credentials
+      <password>vivek@789</password> #nexus credentials
+    </server>
+ 
+  </servers>
+
+  <mirrors>
+     <mirror>
+      <id>internalMavenReleaseRepository</id>
+      <mirrorOf>*</mirrorOf>
+      <name>internalMavenReleaseRepository</name>
+      <url>http://13.233.8.54:8081/repository/effort_maven_group</url> #nexus url change and also group name
+    </mirror>   
+  </mirrors>
+  
+
+  <profiles>
+      <profile>
+      <id>snapshots</id>
+      <activation>
+      <activeByDefault>true</activeByDefault>
+     </activation>
+      <repositories>
+        <repository>
+          <id>internalMavenSnapshotRepository</id>
+          <name>internalMavenSnapshotRepository</name>
+          <releases>
+            <enabled>false</enabled>
+            <updatePolicy>always</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>fail</checksumPolicy>
+          </snapshots>
+          <url>http://13.233.8.54:8081/repository/effort-snapshots</url> #change here nexus repo name
+          <layout>default</layout>
+        </repository>
+      </repositories>    
+    </profile>
+     <profile>
+      <id>release</id>
+      <repositories>
+        <repository>
+          <id>internalMavenReleaseRepository</id>
+          <name>internalMavenReleaseRepository</name>
+          <releases>
+            <enabled>false</enabled>
+            <updatePolicy>always</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+            <checksumPolicy>fail</checksumPolicy>
+          </snapshots>
+          <url>http://13.233.8.54:8081/repository/effort-releases</url> #change here nexus repo name
+          <layout>default</layout>
+        </repository>
+      </repositories>    
+    </profile>     
+  </profiles> 
+</settings>
+
+
+To deploy in Nexus
+mvn clean deploy -Drepository.server.root=http://13.233.8.54:8081/repository
+
+In maven-metadata.xml it will stores the date which is when the war file is created and by whom and how many times it was created
