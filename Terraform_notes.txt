@@ -1,0 +1,52 @@
+Terraform is orchestaraton tool by which we can infra as code of all service providers like Google.AWS.Azure
+
+
+
+TO connecto to Terraform
+Downoad aws and place them in .aws directoy in the file credentials as below,so that it can connect to the AWS 
+aws_access_key_id
+aws_secret_access_key 
+
+credentials
+[default]
+aws_access_key_id=xxxxxxxxxxxxxxxxxxxxxxx
+aws_secret_access_key=xxxxxxxxxxxxxxxxxxxxxxx
+
+
+config
+[default]
+region=us-west-2
+output=json
+
+
+
+normally to write Terraform,Industry best practice to write the code in 3 files
+1. main.tf
+2. config.tf
+3. variable.tf
+
+
+In Main.tf
+provider --->cloud provider
+
+Below 
+resource ---> service in the cloud
+ami--> ami Id
+instance type ---> configuration of instance
+tags --> name
+
+resource "aws_instance" "test1"{
+ami ="ami-06a0b4e3b7eb7a300"
+instance_type="t3.micro"
+
+tags={
+    Name="instance1"
+}
+}
+
+
+
+terraform init --> to initiate terraform
+terraform plan --> check syntax error
+terraform apply  --> create whats written in code
+terraform destroy --> destroy  resoruces it was created.    

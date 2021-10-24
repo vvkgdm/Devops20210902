@@ -1,0 +1,50 @@
+Jenkins:
+
+jenkins installation types:
+1. Java web application deployment
+2. rpm based jenkins installation
+3. Docker based application
+
+
+
+How to reset admin password in Jenkins:
+Go to jenkins home --> config.xml->disableadminstrativemonitor tag --> disbale/change true to false in use security
+
+RBAC : Role base authorisation is plugin which we need to install from MArketpalce
+which is act as Groups in linux for Jenkins
+
+
+Master-Slave Configuration:
+AFter installing jenkins in server by default jenkins will create jenkins user with home directory as jenkins location path and also jenkins /bin/bash will be as /bin/false
+
+We will login to jenkins user by 
+
+sudo su -s /bin/bash jenkins
+
+AFter that create ssh key and copy it to a user in slave
+then go to jenkins UI and create node 
+    In the Launch method section
+        --> go with launch agents via ssh
+        --> Give hostname/iP address
+        --> add credentials
+        --> add a user which we created designated to jenkins and in private key section add jenkins private key 
+        --> select known host file strategy
+
+launch agent we can able to connect agent node
+
+Github web hook can trigger a build  even pull request was requested
+
+
+
+Pipeline:
+Why we use Scripted pipelines:
+WE can see logs for every steps like for every stage we can see logs and we can identify issue easily.
+we need to 5 different job needs to run 5 different nodes that is not possible. we can specify which node do we need to run a specific job
+
+There are 2 types of Pipeline
+Scripted Pipeline
+
+Declarative Pipeline
+
+
+
