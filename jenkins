@@ -1,0 +1,254 @@
+JENKINS BY DOING
+
+
+
+Installing jenkins
+install java-
+sudo yum install -y java-1.8.0-openjdk-devel
+
+install wget for next step-
+sudo yum install -y wget
+
+Add jenkins repo-
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+
+Add jenkins key-    
+sudo rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+
+Install jenkins-
+sudo yum install -y jenkins
+
+Enable and start jenkins-
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+
+jekins initial user password-
+cat /var/lib/jenkins/secrets/initialAdminPassword
+
+
+==>Build and Build Management:
+
+Building in jenkins:
+--------------------
+
+After logging on to jenkins,
+click on new item and select folder fromt he options below and provide a name 'test' anf click ok
+
+Now we need to create a job,
+Click on 'create job' and select 'freestyle project' and provide the name user_test and click ok
+
+Now in the configuration, scroll down and cllick on build and select shell execution and provide the below commands that need to be executed on the shell
+
+uname -a && whoami > user_test.txt 
+{the lab objective was to write the uname and whoami output into a file}
+
+Click save and then click build now 
+
+After the build execution click on 'workspace' to see the result
+
+
+
+Building from SCM:
+------------------
+
+In this lab we need to convert a maven project running on m3 maven server to run via jenkins
+We have to pull the project from git repo and build the project which should include the call to golang which will create the index.jsp file
+The index.jsp which is a result of bin/makeindex (golang) file needs to be tracked for version control (this file has to be artifacted and fingerprinted)
+
+Go to 'manage jenkins' and click on 'gloabl tool coniguration' 
+Click on 'add maven' and provide the name M3 and let the default version be and then click on save
+
+Now create a new item and name it 'maven project' and select 'freestyle project' and click on ok
+
+Under SCM select git and provide the github url
+Scroll down to build and click the drop down and select 'Invoke top level mavn targets' and provide the name we configured earlier 'M3' and then give 'clean package' in the goals sections which will invoke them both 
+
+Here we have been specified that the binary 'bin/makeindex' will produce a file called index.jsp upon being invoked and the index.jsp file needs to be archived as an artifact
+
+To achieve the above case, click on drop down besidw build and select 'Execute shell' and procide 'bin/makeindex' in the command section
+Then click on 'post build actions' and click on 'archive artifacts' and provide the name of the file to archive 'index.jsp' and select the button 'Fingerprint all archived artifacts'
+
+Click on save and then click on build now
+
+
+Distributing a build:
+---------------------
+
+Now we need to distribute the load by running the maven build on a slave node to which the jenkins user must be keyed to allow sudo access 
+
+To enable distributing the build amongst master and node we need to provide sufficient permissions for the jenkins user, i.e sudo premissions on node and enable password less connectivity for jenkins user from master to node
+
+To enable that, first we generat the ssh keys in master by loggin in as the jenkins user
+
+ssh-keygen
+
+Now login to the slave and give the jenkins user sudo access
+Now to enable ppassword less login, in the master server
+
+ssh-copy-id jenkins@'node server ip'
+
+bash-4.2$ cat .ssh/id_rsa                         {on master}
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAyRhafu0mL/VQgTPkHqAs2YTElkFr8TUTsY013ZHTiSzYJSGn
+oyH4L5a4HxSgEmCB94yiVfHqkUfqmvi2r9zI5CTU2cDTBrcWYZb+D4OfMyS22dow
+gTcOeP8pyLkh3FDTYhSJStDyNomE/RnsEI42AWduTzIv4crt+t3v5/dGoVYWMUZl
+3FL/08NBgUkGRzMuyaE82NnIvs2d6lVS1EVV25EaTc2k7evwDEV1jl3MnJsEm/9O
+0F8H5PMR/83Mp0Ye/FNtPmPCgKdXE6Zd+JobAhGIKMd6awFwuz0U7FNbYnJ+AnrF
+JiHiqjjgFpi34mhKqLG2Y3q0o8BBwz/0WGBU4QIDAQABAoIBADF8A7DeLJp6lF/m
+5AjBQ6gXKsUKvkQx2nHDnPC0FMjZtyqT+IuFLWyQeyhyy90Z0IGZIs1hZWZwuwN9
+ln76Jpk1kwcukv9BCInlPQmWSxOrwi8jqPHzGWWe7KpPHEz5urqU8R/vANt4xbf+
+q/9670EzMYrdf7jhVeR4vrNnPwMuGpfLgBRAG+mb/AieWFxgSXsEyRs6RTCY3VNB
++XljeNx8sOXS6y+84VDjPb/EdS127tFfFu2Ca3m1i5fyRfzAssdkk5s7jwD7LjTx
+c2zbom5PK4FqKmhFeRM/L00gT/3yXZMHywTO/heoLuWWgJ8P6Jb3i3jGOPM7+bb8
+/eKWcv0CgYEA/XWUSDQk8ffnuG7Sc5/TIxcrNYS4FPXVRIwFKPSDM48594qzQwwj
+dfCFb9tEMhuG3aT4rku3cSfAWhCZgSadBbBnhmYmKPaiYSXM8BaAKs+ih0HQJegx
+Niw0B+QJc2ni0tJ+gc7IwvRAsD9UVLB8TH684ba+1I4/sbNmJKtlc+cCgYEAyxxm
+EMVuxRS8WUQUTBkqZNMkMjhQfgGLT9OBkVXEObJ3BUKS/iq9LIEMkoyqcFQGzDVd
+U3je4NIq1xZV9vkeEN2z4eUgsIAQPny4hD6pYxP6TQI+LblPjHD3Q2lpdja31mfz
+iBT6kGPZUawJMKSqpST8VQrvX/1Lp89cAwTWV/cCgYEArXcsPeJaKrRlBafrJrEK
+uqhfrSghKE87X8eIvIfjx4TNwmpN16RWHKC5Yl2ppbWLLuR6QieV676t+bYEqQx5
+SOx7XdNJaJ2rcluBkAuGOkaS0IktYNQx4gaMsZ3TDgc48tqXNFYGts6d+0HMgI2s
+9FmFAeGlZynX09GZJZ2cOJ8CgYEAkBZJYcRt3GnlY/4j2AhSRsxydR32HC3EQpDs
+7clGNxgfzx93X8+5/ARgguY/UwiI+f0xg7HPivYNZiB2Q4peheCBZ9M/6XYwD+Qy
+kb5SM/NMMa1RpuY7RIovHyd8pVwT9oov/W3EgwISfRnqOxPV6uneCAaF4jayoQ09
+XPblh+kCgYByLSB8I/x1c2oXlkRfMI1zrW6KIdzIyXJPbtl5IkVPEM6WpMysAMKK
+XOy2RFiKEaq2Dd/0Jcc9jUrbyMhujoygmlB61tq6elYftdJn4GL9u0Ve2iS8tNb/
+ApETUoLR8GYKG0IMB9W3l5su2l0eWsfK7g77NHEJvWCUGliFJ1ANUA==
+-----END RSA PRIVATE KEY-----
+
+
+Now login to jenkins 
+
+Click on 'manage jenkins' and click on 'manage nodes'
+Here, click on 'new node' to add a node
+
+provide,
+name : 'slave1'
+label: 'slave1'
+remote root directory: /home/jenkins
+launch method:
+          host: 'slave ip'
+click on add credentials and select 'ssh username with private key' for scope
+username: jenkins
+click on 'enter directly' and paste the private key of the master server
+
+click on save
+{this will enable authentication for the master on the slave server by using the masters private key, as the public key has already been copied to the slave}
+{note that git and java have to be installed on the slave node prior to this}
+
+Now we need to create a job to utilise the distributed builds config
+
+Click on 'new item' and provide the name 'maven project' and select 'freestyle project' and clikc ok
+
+Out requirement is to run this job only on the slave, so select the option 'Restrict where this project can be run' and provide the label we defiend above for the slave node 'slave1'
+
+Under SCM provide the github url 
+
+Under 'build' select 'invoke top level maven targets' and provide 'clean package'
+add another step called 'execute shell' and provide 'clean package' for the command 
+
+Click on archive artifacts and select 'fingerprint all archived artifacts' and click on save
+
+Now we need to configure the maven on the global tool configuration
+
+click on 'manage jenkins' and select 'global tool configuration'
+scroll down and click the dropwodn beside maven and provide the name M3 for the maven install
+
+Now we need to configure our job to use this maven install,
+click on 'configure' in the project section and scroll down to the maven section and select M3 installation under the  'invoke top level maven targets' section of the build
+
+Now click on build now for the job to run and execute the maven build on the slave node
+
+
+
+Building an app as a freestyle jenkins project:
+-----------------------------------------------
+
+Deployed the train-schedule app as a freestyle project and trigged the build process via webhook. 
+{refer ci-cd pipeline notes for the details}
+
+
+
+Working with artifacts and fingerprints:
+----------------------------------------
+https://github.com/linuxacademy/content-cje-prebuild.git
+
+Objective - Create and build the index project inside webdev folder. Then install the copy artifact plugin to enable the copy of the artifact genered from the index project to the new tomcat project that we create in another folder 
+
+
+Go to 'Global Tool config' and click on add maven and give name M3 and leave the default version 
+Click on new item and create a folder called 'webdev' and acceot all the defaults and click save
+Now in the webdev folder create a new job and name it index and select freestyle project
+Under SCM section paster the github url
+Under the build section select 'invoke top level maven targets' and select the maven version as M3 and provide 'clean package' as goal
+Clikc on 'executable shell' and in the command section enter 'build/makeindex'
+Click on 'post build actions' and select 'archive artifacts' ,
+files to archive: index.jsp
+Click on advanced and select 'fingerprint all archived artifacts' 
+
+Build the project and make sure the archive exists 
+
+Now go to manage plugins and install the 'copy artifacts' plugin
+
+create a folder called 'backend' and create a folder called 'tomcat' inside the backend folder
+
+Now inside the tomcat folder we need to create a job called tomcat and select freestyle project for it 
+under SCM put the git url 
+
+Scroll donw to build and under 'add build step' we'll now find the 'copy artifacts from another project' step, select it 
+provide the project name 'webdev/index' 
+artifacts to copy : index.jsp 
+target directory : scr/main/webapp
+
+Click on 'add build step' again and select 'invoke top level maven targets'
+Maven version: M3
+goals : clean package
+
+ 
+Under post build actions select 'Publish JUnit test result report' 
+Test report XMLs :  target/surefire-reports/*.xml and click on save and build it 
+
+
+
+
+Security in jenkins:
+--------------------
+
+On folder level we can enable it via 'Enable project-based security' option 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

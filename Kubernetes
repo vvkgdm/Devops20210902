@@ -1,0 +1,389 @@
+
+Masters and Nodes:
+
+On the master-
+
+etcd - this is the key-value store for the cluster
+API server - this  is the one we're interfacing with when we run the kubectl command 
+Scheduler - This watches the nodes and when a pod needs to be deployed, this will determine which node is best capable of running that pod
+Control Manager - Operates the cluster controllers (node controlled, replication controller, endpoints controller, service account & tokens controller)
+
+ {node controlled : Responsible for noticing and responding when the nodes go down 
+ replication controller : Maintaines the correc no.of pods for every replication controlled object in the system
+ endpoints controller : Populates the endpoints object. i.e, joins the services and pods 
+ service account & tokens controller : creates default accounts and api access tokens for new namespaces}
+ 
+ 
+On the node-
+
+proxy - when we setup up a service to expose any of the pods that are on a container or any type of port forwarding is handled by proxy
+kubelet - actual kubernetes service that's running on the node  
+container runtime - docker or some runtime. When kubernetes requires to start a container it will use this runtime 
+
+{all the above are pods on the master and nodes. Apart from the network (flannel) and container runtime, all the rest of the pods are run in the master} 
+
+
+Pods and Containers:
+
+Pod is the smallest unit of deployment.
+The containers inside the pod have the same IP address but run on different ports
+Applications in a pod have a shared volume
+The containers in a pod can communicate on localhost on their respective ports
+
+kubectl get namespaces {to list namespaces}
+
+kubectl create namespace podexample
+
+vi pod-example.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+ name: examplePod
+ namespace: podexample
+spec:
+ volumes:
+ -name: html
+  emptyDir: {}
+ containers:
+ - name: webcontainer
+   image: nginx
+   volumeMounts:
+   - name: html 
+     mountPath: /usr/share/nginx/html
+ - name: fielcontainer
+   image: debian 
+   volumeMounts: 
+   - name: html
+     mountPath: /html
+   command: ["/bin/sh","-c"]
+   args:
+     - while true; do
+         date >> /html/index.html;
+         sleep 1;
+       done
+       
+       
+kubectl create -f ./pod-example.yml
+
+kubectl --namespace=podexample get pods
+
+curl 'publicIP':80
+
+{this will return the date being repeatedly written into the shared volume /html/index.html file as we're hitting the url on port 80 which is the nginx port and the nginx will display the contents of the index.html file}
+ 
+
+==> Networking
+
+A primary overlay network is essential for the whole setup to function.
+To setup this configuration we use plugins to install the network. The most used plugin is flannel
+We can install flannel plugin by downloading the respective .yml from github and runningit 
+By using the below command we can  provide a cidr range and start the network
+kubeadm init --pod-network-cidr=10.244.0.0/16
+
+Flannel stores state in /etc and for network configuration it will pass through the kubeapi to get it done
+ 
+   
+==> DNS:
+
+DNS is setup on the cluster once we have the network overlay on
+DNS are created w.r.t the namespaces. For a container running in a pod, the DNS records is stored as an A record created under the namespace it is in.
+
+ex: if there are 2 namespaces web_data and web_logs and we have one container running in each.
+
+container_name    namespace           DNS record
+web	            web_data          web.web_data.svc.cluster.local
+db                  web_data          db.web_data.svc.cluster.local
+logs                web_logs          logs.web_logs.svc.cluster.local
+
+
+Pods search DNS relative to their own namespace. 
+ex: If the web container needs to interact with db, since they are in the same namespace it can directly search the DNS with 'db' and obtain the ip address of the db container.
+
+if we login to the ngnix container running in a pod in one of the nodes and check the resolv.conf file, we can see the following
+
+kubectl exec -it nginx-7cdbd8cdc9-mk5fx /bin/bash 
+
+cat /etc/resolv.conf
+nameserver 10.96.0.10                  {this is the IP of the clusters DNS server} 
+search default.svc.cluster.local svc.cluster.local cluster.local us-east-2.compute.internal mylabserver.com
+options ndots:5
+
+{the above is the network created by the kubelet when the container was created}
+
+
+PodSpec DNS policies determine the way that a conainer uses DNS. If it's default or clusterFirst or none
+
+
+==> ReplicaSets:
+
+A replicaset is a set of pods that all share the same labels
+
+apiVersion: app/v1                                                [Discriptor]
+kind: ReplicaSet                                 {here, there are some labels associated to the replicaset}
+metadata:
+ name: frontend
+ labels:
+  app: nginx
+  tier: frontend
+
+spec:                                                             [ReplicaSet definition]
+ replicas: 3                                     {the labels that we give to pods are controlled by this definition}
+ selector:
+  matchLabels:
+   tier: frontend
+  matchExpressions:
+  - {key:tier,operator:In,values:[frontend]}
+ template:                                       {this is the pod template, so the pods created here will have the below labels}
+  metadata:
+   labels:
+    app: nginx
+    tier: frontend
+   specs:                                                        [container definition]
+    containers:
+    - name:php-redis     
+      image: nginx:latest
+      ports:
+      - containerPort: 80
+
+resources:                                                       [resource limits and environment definition]
+  requests:
+   cpu:100m
+   memory:1000Mi
+  env:
+  - name  
+    
+
+
+==> Services
+
+creating a service
+
+
+vi service-example.yml
+
+kind: Service
+apiversion: v1
+metadata:
+  name: my-service
+spec:
+ selector:
+  app: ngnix
+ ports: 
+ - protocol: TCP
+   port: 32768                             {this is the port on the service side} 
+   targetPort: 80                          {since we're running nginx containers from the replica file above, we user 80 as the port here}
+
+
+
+==> Deployments:
+
+vi deployexample.yml
+
+apiVersion: apps/v1                                            
+kind: Deployment
+metadata:
+ name: example-Deployment
+ labels:                                        {these are the labels that this deployment is going to control}
+  app:nginx
+spec:                                           {here, we're speciying the replica set. 2 replicas and the labels to consider pods for the 
+ replicas: 2                                     replica set}
+ selector:
+  matchLabels:
+   app: nginx
+ template:                                      {here we specify the pod template}
+  metadata:
+   labels:
+    app: nginx
+  spec:
+   containers:
+   - name: nginx
+     image: darealmc/nginx-k8s:v2
+     ports:
+     - containerPort: 80   
+     
+
+
+kubectl create -f deployexample.yml
+
+Since the labels are the same, we can  pass the above service file to create the service 
+
+kubectl create service -f service-example.yml
+
+kubectl set image deployment.v1.apps/example-deployment nginx=darealmc/nginx-k8s:v2
+{^ this one is to set the image in the deployment to another one (as we can see we gave the v2 image)}
+                  {this is how to point to that           {this is the new image we want to update}
+                   specific deploymnet}
+
+
+kubectl describe deployment example-deployment      {to check how it went on with the rolling deployment} 
+
+
+==> Installing kubernetes and creating a deployment
+
+setenforce 0  {disable selinux}
+sed -i 's/enforcing/disabled/g' /etc/selinux/config
+
+-enable the br_netfilter module for cluster communication
+
+modprobe br_netfilter
+
+- now we're setting the iptables to 1 so that kubrnetes can manipulate them 
+echo "1" > /proc/sys/net/bridge/bridge-nf-call-iptables 
+
+-installing docker dependecies
+yum install -y yum-utils device-mapper-persistent-data lvm2
+
+-add docker repo and install docker ce
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+yum install -y docker-ce
+
+-set the cgroup driver for docker to systemd 
+sed -i '/^ExecStart/ s/$/ --exec-opt native.cgroupdriver=systemd/' /usr/lib/systemd/system/docker.service
+
+-systemctl daemon-reload
+systemctl enable docker --now
+Created symlink from /etc/systemd/system/multi-user.target.wants/docker.service to /usr/lib/systemd/system/docker.service.
+
+docker info | grep -i cgroup
+ Cgroup Driver: systemd
+ Cgroup Version: 1
+
+- set the kubernetes repository
+cat << EOF > /etc/yum.repos.d/kubernetes.repo
+> [kubernetes]
+> name=Kubernetes
+> baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+> enabled=1
+> gpgcheck=0
+> repo_gpgcheck=0
+> gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+>   https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+> EOF
+
+yum install -y kubelet kubeadm kubectl
+
+
+On the master Node:
+kubeadm init --pod-network-cidr=10.244.0.0/16
+
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 10.0.1.100:6443 --token cwdg5i.v9eszpab06jw528b \
+    --discovery-token-ca-cert-hash sha256:af486bfc019eef49aa968591a721bf1e90aee02cc64f58b46faec950abadd523 
+
+kubectl get nodes
+NAME        STATUS     ROLES                  AGE     VERSION
+k8smaster   NotReady   control-plane,master   2m18s   v1.20.4
+k8snode1    NotReady   <none>                 109s    v1.20.4
+k8snode2    NotReady   <none>                 100s    v1.20.4
+
+- The nodes are not ready as we didn't create a network overlay, we need to install flannel first
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+kubectl get pods --all-namespaces  {flannel pods are present}
+NAMESPACE     NAME                                READY   STATUS    RESTARTS   AGE
+kube-system   coredns-74ff55c5b-89wm5             1/1     Running   0          4m19s
+kube-system   coredns-74ff55c5b-bkvcl             1/1     Running   0          4m19s
+kube-system   etcd-k8smaster                      1/1     Running   0          4m35s
+kube-system   kube-apiserver-k8smaster            1/1     Running   0          4m35s
+kube-system   kube-controller-manager-k8smaster   1/1     Running   0          4m35s
+kube-system   kube-flannel-ds-jxlts               1/1     Running   0          33s
+kube-system   kube-flannel-ds-wshts               1/1     Running   0          33s
+kube-system   kube-flannel-ds-xwjzw               1/1     Running   0          33s
+kube-system   kube-proxy-7fnww                    1/1     Running   0          4m10s
+kube-system   kube-proxy-7qfkd                    1/1     Running   0          4m1s
+kube-system   kube-proxy-nmx7w                    1/1     Running   0          4m19s
+kube-system   kube-scheduler-k8smaster            1/1     Running   0          4m35s
+
+kubectl get nodes
+NAME        STATUS   ROLES                  AGE     VERSION
+k8smaster   Ready    control-plane,master   4m58s   v1.20.4
+k8snode1    Ready    <none>                 4m29s   v1.20.4
+k8snode2    Ready    <none>                 4m20s   v1.20.4
+
+kubectl create deployment nginx --image=nginx
+deployment.apps/nginx created
+
+kubectl get pods
+NAME                     READY   STATUS    RESTARTS   AGE
+nginx-6799fc88d8-8rsng   1/1     Running   0          13s
+
+kubectl scale deployment nginx --replicas=4
+deployment.apps/nginx scaled
+
+kubectl get pods
+NAME                     READY   STATUS              RESTARTS   AGE
+nginx-6799fc88d8-4msn8   0/1     ContainerCreating   0          2s
+nginx-6799fc88d8-8rsng   1/1     Running             0          37s
+nginx-6799fc88d8-n5sz8   0/1     ContainerCreating   0          2s
+nginx-6799fc88d8-z27gh   1/1     Running             0          2s
+
+kubectl get pods
+NAME                     READY   STATUS    RESTARTS   AGE
+nginx-6799fc88d8-4msn8   1/1     Running   0          10s
+nginx-6799fc88d8-8rsng   1/1     Running   0          45s
+nginx-6799fc88d8-n5sz8   1/1     Running   0          10s
+nginx-6799fc88d8-z27gh   1/1     Running   0          10s
+
+===========================================================================================================================================
+Next Stop: Kubernetes essentials
+===========================================================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

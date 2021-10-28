@@ -1,0 +1,3640 @@
+Some required packages to run docker:
+yum install yum-utils device-mapper-persistent-data lvm2 -y
+
+Adding docker repo to yum:
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+Installing docker:
+yum install docker-ce {ce:- Community Edition, ee:- Enterprise Edition}
+
+Enable and start docker:
+systemctl enable docker
+systemctl start docker
+
+Run the first container:
+docker run hello-world
+o/p-
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+(OR)
+
+Install docker via script provided by docker in docker hub:
+wget -qO- https://get.docker.com | sh
+
+Display images:
+docker image ls
+
+create a docker file to execute some tasks:
+vi dockerfile 
+FROM centos:latest
+LABEL maintainer="rohit"
+RUN yum updae -y
+RUN yum install java-1.8.0-openjdk -y
+
+To run the dockerfile:
+docker build . {runs the docker file in the directory}
+
+Run an image as a container:
+docker container run -it --name first-container 123 {-it: interactive,terminal 	'123' is the imager id ; use -d to run in detached mode}
+
+List container:
+docker container ls	{list running container}
+docker container ls -a	{show previous run containers}
+docker container ps -a {to check if the container process is running}
+
+To run a container that has been stopper:
+docker container ls -a 
+docker container start 'name/id of container'
+docker container ls -a {this will now show that the container has been started and is running}
+
+To attach to a running container:
+docker attach 'name/id of the container'
+
+To delete a container:
+docker container rm 'name/id of the container'
+
+To delete image:
+docker rmi 'imageid or tag'
+
+To move an image to the docker hub:
+docke login {enter username and password for dockerhub login}
+docker tag 'imageId' 'reponame'/'desiredImageName'
+docker push 'reponame'/'desiredImageName'
+
+To tag a docker image:
+docker tag 'imageId' testingimages/installation:v1 {here v1 is the tag, this is also used as the version}
+
+To push the image to docker hub:
+docker login {login to dockerhub}
+docker push 'reponame'/'imagename' {imageTag in this case is testingimages/installation}
+
+To pull an image from docker hub:
+docker pull 'reponame'/'imagename':'imagetag'
+
+To list open ports in a image:
+docker image history 'imagename'
+
+docker container run -d -P nginx {will run nginx on default port specified in the config}
+docker container run -d -p nginx {will map a random local port to the 80(specified in image config) and run the container}
+docker container run -d -p 80:80 nginx {will map 80 on local to the 80 on which the container runs}
+
+Docker Volume:
+we can create a volume(with data) and attach it to docker containers
+docker volume ls {to list out the volumes}
+docker volume create 'volumename' {to create a volume}
+docker volume inspect 'volumename' {list out the details regarding the volume}
+docker container run -d --name 'containerName' --mount source='volumename',target=/app nginx {this will create a container with the specified name and attach the specified volume to the /app folder and load nginx as the image for the container. Here we can also specify type=bind for creating a bind mount}
+docker container run -d --name 'containerName' -v 'volumename':/app nginx {short format for above command}
+docker container run -d --name mysql-instance --mount type=volume,source=mysql_data,target=/var/lib/mysql -e MYSQL_ROOT_PASSWORD=spoors@123 mysql:latest
+docker container inspect 'comtainerName' {if we inspect the container we can see the volume details under MOUNT section}
+docker container exec -it 'comtainerName' sh  {to connect to a container in bash mode}
+
+
+Ports:
+
+docker container run -d --expose 3000 -p 8080:80/tcp nginx 
+-d : detached mode
+--expose : to expose a port on the container
+-p 8080:80 : this will map the port 80 on the container to the port 8080 on local system
+-P : to map a local port to the container
+
+docker container ports 'imageId' {this will list all the port mappings}
+
+
+Networking:
+
+docker network ls {list all networks on the host}
+docker network inspect 'networkName'
+docker network create 'networkName'
+docker network rm 'networkName' 
+docker network connect 'networkName' 'containerName'
+docker network disconnect 'networkName' 'containerName'
+docker network create --subnet 10.1.0.0/24 --gateway 10.1.0.1 br02
+
+docker network create --subnet 10.1.0.0/16 --gateway 10.1.0.1 --ip-range=10.1.4.0/24 --driver=bridge --label=host4network br03
+docker container run -d --name network-test02 --ip 10.1.4.102 --network br04 nginx
+{here, we're creating a container in detached mode with name 'network-test02' and specifying the ip of the container and mentioning as specified}
+
+docker network create -d bridge --internal localhost 
+
+
+LAB:
+docker network create forntend
+docker network create localhost --internal
+docker container run -d --name database --network localhost -e MYSQL_ROOT_PASSWORD=P4ssW0rd0! mysql:5.7
+
+
+DOCKERFILE:
+
+The file contains all commands use to start a container 
+Docker image consists of read-ony layers
+Each layer is a docker file instruction 
+Layers are stacked (on top of one another)
+Each layer is a delta of the changes from the previous layer
+Images are build using 'docker images build' command 
+
+DockerFile layers:-
+
+FROM ubuntu:1604       {this tells docker what the base image is going to be}
+COPY . /app            {copies the files from current dir (docker client's current dir) to /app on the container} 
+RUN make /app          {this will build the application with make}
+CMD python /app/app/py {tells the container what command to run when it starts}
+
+
+Best Practices:
+Keep the containers as emphermal as possible {easy to stop and run and recreate with changes}
+Follow principle 6 of twelve factor app {execute the app as one or more stateless processes.}
+Avoid including unnecessary files 
+Use .dockeignore
+Use multi stage builds
+Don't install unnecessary packages
+Decouple applications
+Minimize the number of layers
+Sort multi-line arguments
+Leverage the build cache
+
+Working with instructions:
+
+on docker server-
+mkdir -p dockerfile/app/
+cd dockerfile/app/
+git clone 'url' src {this will clone the git url into src directory}
+
+vi dockerfile
+
+FROM node                       {base image}
+LABEL org.example.version=v1.0  {defining the label}
+RUN mkdir -p /var/node		 {execute shell commands on container while it's being built} 	
+ADD src/ /var/node/             {to copy files or dir to a dir on the container(with add we can supply url as the source)} 
+WORKDIR /var/node               {set the workdir}
+RUN npm install                 {this command will be executed in the /var/node as that is set as the working dir}
+EXPOSE 3000			 {to specify which port the container listens on}								
+CMD ./bin/www                   {sets the default commands and parameters that get executed when the container starts}
+
+
+Note: 
+CMD is a singleton, it can only be supplied once per docker file. Alternative to that is ENTRYPOINT(this allows the container to run as an executable)
+
+
+
+Building an image from a docker file :
+
+docker image build -t 'name':'tag' . {myappsrepo/app:v1} {to specify a diffrent path to docker file other than current dir then use the f flag}
+
+To run a container from the image-
+
+docker container run -d --name myfirstapp -p 8080:3000 myappsrepo/app:v1 
+
+
+
+Environment Variables:
+
+ENV in docker file 
+--env to use while running a container 
+
+FROM node
+LABEL org.example.version:v1.0
+ENV NODE_ENV="dev"
+ENV PORT 3000
+
+RUN mkdir -p /var/node 
+ADD src/ /var/node/
+WORKDIR /var/node
+RUN npm install
+EXPOSE $PORT
+CMD ./bin/www
+
+docker image build -t sampleimg/app:v2 . {this will build an image based on the abve docker file}
+
+docker container run -d --name latestcont -p        8081:3001                   --env PORT=3001  sampleimg/app:v2
+                                            {mapping port 8081 on locat to 3001}   {overwriting the PORT env variable configured in the dockerfile}
+
+
+
+
+Build Arguments:
+
+These are the arguments that are executed during the build time. 
+
+In docker file 
+FROM node
+LABEL prg.example.version:v1.0
+ARG SRC_DIR=/var/node  {accepts key-value pair}
+
+RUN mkdir -p $SRC_DIR
+ADD src/ $SRC_DIR
+WORKDIR $SRC_DIR
+RUN npm install 
+EXPOSE 3000
+CMD ./bin/www
+
+While building an image
+docker image buid -t sampleimg/app:v2 --build-arg SRC_DIR=/var/node .
+
+
+
+User Privileges:
+
+FROM centos:latest
+RUN useradd -ms /bin/bash testuser
+USER testuser                             {this will define which user to use while executing the details mentioned in the dockerfile}
+
+
+docker image build -t sampleimg/apptest:v1
+docker container run -it --name user-test sampleimg/apptest:v1 /bin/bash {since we're using -it flag, that means we want to interact with the container. That's the reason we specfy /bin/bash as the shell to connect to}
+
+docker container exec -u 0 -it user-test /bin/bash    {we use this when we want to login to a running container}
+                                                       { the exec -u is used to specify the use with which we want to connect, 0 is root}
+
+
+*****(REVIEW ENTRYPOINT VS COMMAND video again)*****
+
+
+Building images additional info:
+
+-f : to specify the docker file we want to use while building an image 
+
+docker image build -t sampleimg/apptest:v1 -f dockerfile.test .
+
+We can add additional metadata while building the image 
+
+docker image build -t sampleimg/apptest:v1 --label org.sample.version=v1.0 -f dockerfile.test .
+
+--rm        : To delete any intermediate containers created while building the image
+-<<EOF EOF : To pipe in the docker file contents from stdin 
+
+docker image build -t sampleimg/appimg:stdin --rm -<<EOF
+FROM nginx:latest
+VOLUME ["/usr/local/bin/"]
+EOF
+
+remote url : we can also build images using remote urls 
+
+docker image build -t sampleimg/appimg:stdin 'git url' {to build from master}
+docker image build -t sampleimg/appimg:stdin 'git url'#'ref' {to build from branch}
+docker image build -t sampleimg/appimg:stdin 'git url'#'ref':'directory' {to build from docker file in a directory in a branch}
+
+
+using tar file : we can build and image from the contents of a tar file 
+-< 'tar file name'
+
+docker image build -t sampleimg/appimg:from-tar -< appimg.tar.gz  {the tar file should contain the docker file}
+
+
+Multi stage builds:
+
+We need to build images in multiple stages to elimminate multiple layers from the image and to keep it compact 
+
+FROM node AS build      {here, wer're naming the stage as build by using the AS flag}
+RUN mkdir -p /var/node/
+ADD src /var/node/
+WORKDIR /var/node
+RUN npm install 
+
+FROM node:Alpine
+ARG VERSION=v1.0
+LABEL org.sample.version:$VERSION
+ENV NODE_ENV="Production"
+COPY --from=build /var/node/ /var/node/
+WORKDIR /var/node
+EXPOSE 3000
+ENTRYPOINT ["./bin/www"]
+
+docker image build -t sampleimg/appimg:multi-stage-build --rm --build-arg VERSION=1.1
+
+Distributing images on docker hub: 
+
+create a dockerfile for the image
+
+move to the source code and run the below command 
+git log -1 --pretty=%H {to get the commit hash of the code}
+
+move to the docker file dir
+
+docker image build -t sampleimg/appimg:'commit hash' --build-arg VERSION=1.5 .
+docker login 
+docker image tag sampleimg/appimg:'commit hash' 'dockerhub_username'/appimg:'commit hash' 
+docker image push 'dockerhub_username'/appimg:'commit hash'
+docker image tag sampleimg/appimg:'commit hash' 'dockerhub_username'/appimg:latest  {to push the image also with latest tag} 
+docker image push 'dockerhub_username'/appimg:latest
+
+
+Saving and loading Images:
+
+docker image save 'imagename' --output newfile.tar
+or
+docker image save 'imagename' --o newfile.tar
+or
+docker image save > newfile.tar
+
+to load it 
+docker image load newfile.tar
+
+Inspecting a container:
+docker container top 'containerName'
+docker container stats
+
+Restart containers:
+
+--restart flag can be used with docker container run command to specify any of the below options 
+
+no : By default the container is not restarted if the server or docker servivce restarts
+on-failure: This will restart the container if it exits with other error code rather than 0
+always : restarts the container everytime it goes off
+unless-stopped : restarts the container everytime unless it has been manually stopped
+
+
+
+Docker Events:
+Docker events give us real time data about containers (logs)
+docker system events 
+docker system events --since '1h'
+docker system events ---since '1h' --filter 'filterName'='Filter' {--filter type=container ; --filter event=attach ; --filter event=die}
+
+docker system events --filter type=container --since '1h'
+
+
+Managing stopped containers:
+
+docker container ls -a -q {-q flag will list only the id's of the containers}
+docker container ls -a -q -f status=exited {-f flag is for filter, it will filter the containers based on the condition we provide}
+
+
+Managing docker with Portainer:
+To manage docker from UI
+docker volume create protainer_data
+docker container run -d --name portainer -p 8080:9000 --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer 
+ 
+ 
+Updating container with watch tower:
+
+Watchtower will continuously keep checking if there are any changes in the image of the running container. If there are changes then it will automatically restart the container to reflect all the changes 
+
+git clone 'url of the git repo for watchtower' watchtower
+cd watchtower
+ls {this will also include the dockerfile}
+git checkout dockerfile {here dockerfile is the name of the branch}
+docker login {login to dockerhub}
+docker image build -t 'dockerhub username'/my-express .
+docker image push 'dockerhub username'/my-express
+docker container run -d --name watched-app -p 80:3000 --restart always 'dockerhub username'/my-express
+docker container run -d --name watchtower --restart=always -v /var/run/docker.sock:/var/run/docker.sock vetec/watchtower -i 15 
+{^ this will run the contianer watchtower in a 15 seconds interval (specified by the -i flag) and restart any containers with changed images}
+*****now if we change the docker file and then rebuild the image and push it to dockerhib, then the watchtower will automatically check for changes every 15 seconds and it will re run the container with the changed image automatically*****
+
+
+Docker Compose:
+
+Installing:-
+sudo curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+chmod +x /usr/local/bin/docker-compose {to make it executable}
+docker-compose --version
+
+mkdir compose-commands
+cd compose-commands
+vi docker-compose.yml
+version: '3'
+services:
+ web:
+  image: nginx
+  ports:
+  - "8080:80"
+  volumes:
+  - nginx_html:/usr/share/nginx/html/
+  links:
+  - redis
+ redis: 
+  image: redis
+volumes:
+ nginx_html: {} 
+
+docker-compose up -d {to run the compose file and start the containers conffigured in it}
+docker-compose ps  {to list the started services}
+docker-compose stop {to stop the created services (containers)}
+docker-compose start
+docker-compose restart
+docker-compose down {to kill the started containers}
+
+
+Creating a compose file to run a microservice:
+cd compose
+git clone https://github.com/linuxacademy/content-weather-app.git weather-app
+cd weather-app 
+git checkout compose
+cd ../compose
+vi docker-compose.yaml {creating a compose  file to execute the above dockerfile}
+version: '3'
+services: 
+ weather-app:
+  container_name: weather1
+  build:
+   context: .
+   args:
+   - VERSION=v2.0
+  ports:
+  - "8081:3000"
+  environment:
+  - NODE_ENV=production
+
+****note*
+docker compose file has 4 types of top level services. version,services,networks and volumes.
+version key is mandatory
+In services section we will specify the container definitions. each of the definitions under services will create a container with the given speciications.
+Name of the container will be the service name unless specified specifically 
+If the compose file is changes then we need to make sure that it is rebuild before we run docker-compose up -d
+docker-compose build --no-cache {to avoid using cache layers} 
+
+
+Using volumes and networking:
+mkdir -p compose/ghost
+cd compose/ghost
+vi docker-compose.yml
+version: '3'
+services: 
+ ghost:
+ container_name: ghost
+ image: ghost:latest
+ ports:
+ - "80:2368"
+ environment:
+ - database__client=mysql
+ - database__connection__host=mysql
+ - database__connection__user=root
+ - database__connection__password=pass@123
+ - database__connection__database=ghost
+volumes:
+ - ghost-volume:/var/lib/ghost              {this is the short synctax where we specify the volume name and where it should be mounted}
+networks:
+ - ghost_network
+ - mysql_network
+depends_on:                               {this will specify the dependency, here the ghost blog is dependent on creating a mysql service }
+ - mysql  	
+
+mysql:
+ container_name: mysql 
+ image: mysql:5.07
+ environment: 
+  - MYSQL_ROOT_PASSWORD=pass@123
+ volume:
+  - mysql-volume:/var/lib/mysql
+ networks:
+ - mysql_network                          {this is the network that the ghost uses to communicate with DB}    
+  
+volumes:                                  {existing volumes don't need to be specified here. Only mention volumes manager by compose file}
+ ghost-volume:
+ mysql-volume:
+ 
+networks:
+ ghost_network:
+ mysql_network:
+   
+
+========================*****==================================
+EXAMPLE DOCKER_COMPOSE FILE FOR CREATING MULTIPLE CONTAINERS,VOLUMES and NETWORKS
+version: '3'
+services: 
+ weather-app1:
+  build:
+   context: ./weather-app
+   args: 
+    - VERSION=v2.0
+  ports:
+    - "8080:3000"
+  networks:
+   - weather_app
+  environment:
+   - node_env=production 
+
+ weather-app2:
+  build:
+   context: ./weather-app
+   args:
+    - version=v2.0
+  ports:
+    - "8081:3000"
+  networks:
+   - weather_app
+  environment:
+   - node_env=production
+
+ weather-app3:
+  build:
+   context: ./weather-app
+   args:
+    - version=v2.0
+  ports:
+    - "8082:3000"
+  networks:
+   - weather_app
+  environment:
+   - node_env=production
+ nginx:
+  build:
+   context: ./nginx
+  tty: true
+  ports:
+   - "80:80"
+  networks:
+   - frontend
+   - weather_app
+networks:
+  frontend:
+  weather_app:
+   internal: true
+========================*****==================================
+*****READ DOCCUMENTATION FOR ALL OPTIONS IN DOCKER COMPOSE*****
+
+
+Docker SWARM:
+
+Provides with an easy way to deploy and scale containers
+Consists of swarm cluster and orchestration engine
+A cluster consists of one or more docker nodes
+First node is a manager
+Swarm has an encrypted distributed cluster store
+Communication happens between encrypted networks
+Uses secure join tokens for manager and worker nodes
+Swarm has API which enables us to deploying and managing microservices at ease 
+We can define apps in a manifest file in a declaritive fashion 
+Swarm make it easy to perform rolling updates, rollbacks and scale apps
+
+In Swarm a manager node dispatches tasks to worker nodes and it managers the state of the cluster
+Worker nodes accept and executes the tasks 
+Configuration data and the state of the Swarm are stored in etcd
+TLS is encrypted in Swarm. It uses TLS to encrypt communications as well as authenticating nodes and authorizing roles
+
+In Swarm the automic unit of scheduling is the service 
+It's the construct that adds scaling, rolling updates, rollback to the cluster
+
+
+docker swarm init --advertise-addr 172.31.39.112 (--advertise-addr flag will enable public access to this swarm on the given ip)
+                                                 {^ for this use the puclic ip of the manager node}
+
+once the init is done, it will show the docker swarm join command which needs to be copied and executed in the worker nodes
+
+To list the nodes:
+docker node ls
+
+To inspect a node:
+docker node inspect 'node name or hostname'
+
+To promote/demote a worker node to be the manager:
+docker node promote 'node name or hostname'
+docker node demote 'node name or hostname'
+
+To delete a docker node:
+docker node rm -f 'node name or hostname' {use the -f flag if the node is still running}
+
+NOTE: 
+To delete a manager, the respective node has to be demoted to a worker node first.
+Even though the node is removed, it still thinks it's part of the SWARM. To completely remove it from the swarm we need to execute leave
+
+docker swarm leave
+
+To add the removed node to the swarm, we can get the join token again by executing the below command
+
+docker swarm join-token worker/manager
+
+
+SERVICES:
+
+An application that is deployed on docker in swarm mode is deployed as a service 
+
+Creating a service:
+docker service create -d --name nginx_service -p 8080:80 --replicas 2 nginx:latest
+
+List services:
+docker service ls 
+
+To inspect service:
+docker service inspect 'service name'
+ 
+To check logs of a service:
+docker service logs 'service name'
+
+To list all the tasks of the service:
+docker service ps 'service name'
+
+To scale the number of replicas of a service:
+docker service scale nginx_service=3
+
+Accessing a service:
+A service is accessible on public or private ips
+ 
+NETWORKIN IN DOCKER SWARM
+
+The overlay network driver creates a distributed network accross multiple docker nodes. It sits on top of a host specific network and this allows the containers to comminicate securely.
+
+When we initialise a swarm and add worker nodes to it, it will initialise an overlay network called ingress. This network will access the control as well as the data traffic associated with the swarm.
+Also, a bridge network is create called as 'dockergwbridge' ,  this connects individual docker daemon to the other daemons included in the swarm
+
+Creating an overlay network:
+docker network create -d overlay my_overlay    {-d flag is used to supply the driver}
+
+Creating an encrypted network:
+docker network create -d overlay --opt encrypted encrypted_overlay
+ 
+Creating a new service using network:
+docker service create -d --name nginx_overlay --network my_overlay -p 8081:80 --replicas 2 nginx:latest
+
+Adding a pre-existing service to a new network:
+docker service update --network-add my_overlay    nginx_service {if the service is already in a network, it will be part of 2 networks}
+                                    {^ network to add to}
+
+To remove a service from a network use "--network-rm" flag
+
+
+Using Volumes with SWARM:
+
+To implement volumes in SWARM we'll need the help of plugins as the volumes created will be native to the instance where they are created. 
+
+(Rex-Ray) most used plugin
+
+Installing a plugin:
+docker plugin install 'path to plugin' --alias splunk-logging-plugin
+
+To list all the plugins:
+docker plugin ls
+
+To delete a plugin we need to disable it first before deletion:
+docker plugin disable 'id'
+docker plugin rm 'id'
+
+Execute this in the swarm manager:
+docker volume create -d local portainer_data
+
+Create a service in the manager node:
+docker service create -name portainer --publish 8000:9000 --constraint 'node.role == manager' --mount type=volume,src=portainer_data,dst=/data --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock portainer/portainer -H unix:///var/run/docker.sock
+
+{Creating a service called portainer by mapping port 9000 on the container to 8000 locally and specifying the node role as manager and mounting the locally create volume 'portainer_data' to /data on the container and mapping the bind volume '/var/run/docker.sock' to the one on the container, then specifying the portainer image and mentioning the initial command as '/var/run/docker.sock'}
+
+
+Deploying our stacks on docker swarm:
+
+Stack lets us deploy the complete application to a docker swarm and we do this by using the compose file. 
+
+Below is the process for deploying a prometheus stack in swarm:-
+
+mkdir -p swarm/prometheus
+
+cd swarm/prometheus
+
+vi prometheus.yml                   {This is the prometheus config file}
+global:
+ scrape_interval: 15s
+ scrape_timeout: 15s
+ evaluation_interval: 15s
+
+scrape_configs:
+ - job_name: prometheus
+   scrape_interval: 5s
+   static_configs: 
+   - targets:
+     - prometheus_main:9090
+     - pushgateway: 9091
+     
+ -job_name: nodes 
+  scrape_interval: 5s
+  static_configs: 
+  - targets: 
+    - [MANAGER]:9100
+    - [WORKER1]:9100
+    - [WORKER2]:9100
+
+ -job_name: cadvisor 
+  scrape_interval: 5s
+  static_configs: 
+  - targets: 
+    - [MANAGER]:8081
+    - [WORKER1]:8081
+    - [WORKER2]:8081
+    
+    
+Now we create the compose file to deploy the stack in a swarm
+vi docker-compose.yml
+
+version: '3'
+services:
+ main: 
+  image: prom/prometheus/:latest
+  container_name: prometheus
+  ports: 
+   - 8080:9090                                                     
+  command:
+   - --config.file=/etc/prometheus/prometheus.yml                          {start off with a - cos we're using a list}
+   - --storage.tsdb.path=/prometheus/data                                  {in prometheus we need to use -- to specify flags}
+  volumes:
+  - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro 
+  - data:/prometheus/data
+  depends_on:
+   - cadvisor
+   - node-exporter
+ cadvisor:
+  image: google/cadvisor:latest
+  container_name: cadvisor
+  deploy:                                               {The deploy attribute allows us to supply addtional info that is related to swarm}
+   mode: global                                    {Deploy is swarm specific, if this file is not run in swarm mode then deploy is ignored}
+  restart: unless-stopped                          {'mode: global' tells docker that we're running this container on all nodes}
+  ports:                                           {global is default mode. Set it to 'replicated' and supply no.of replicas you want}
+   - 8081:8000
+  volumes:
+   - /:/rootfs:ro
+   - /var/run:/var/run:rw
+   - /sys:/sys:ro
+   - /var/lib/docker:/var/lib/docker:ro
+  node-explorer:
+   image: prom/node-explorer:latest
+   container_name: node-explorer
+   deploy:
+    mode: global
+   restart: unless-stopped
+   ports:
+   - 9100:9100
+   volumes:
+    - /proc:/host/proc:ro
+    - /sys:/host/sys:ro
+    - /:/rootfs:ro
+   command:
+    - '--path.procfs=/host/proc'
+    - '--path.sysfs=/host/sys'
+    - --collector.filesytem.ignored-mount-points
+    - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+   grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+     - 8082:3000
+    volumes:
+    - grafana_data:/var/lib/grafana
+    - grafana_plugins:/var/lib/grafana/plugins
+    environment:
+    - GF_SECURITY_ADMIN_PASSWORD=P4ssW0rd0!
+    depends_on:
+    - prometheus 
+volumes:
+ data:
+ grafana_data:
+ grafana_plugins:    
+
+
+To deploy a stack:
+docker stack deploy --compose-file docker-compose.yml prometheus
+
+docker stack ls
+
+docker stack ps prometheus {to list the task replicas}
+
+
+LAB:
+
+Creating a swarm cluster and an nginx service to test it 
+
+In the master node-
+docker swarm init --advertise-addr 'privateIp of the master'
+{this will retunr a join command}
+
+In the worker node-
+execute the join command returned above
+
+In the master-
+docker node ls   {this will list both the master and worker nodes created}
+
+Create an nginx service-
+on the master node
+docker service create -d --name niginx_service -p 8080:80 replicas 2 nginx:latest  
+docker service ls 
+
+      
+Creating a stack with docker compose
+
+docker swarm join-token worker {execute this on master node to get the join command}
+vi docker-compose.yml
+version: '3'
+services:
+ db:
+  image: mysql:5.7
+  volumes: 
+  - db_data:/var/lib/mysql
+  networks:
+   mysql_internal:
+    aliases: ["db"]
+  environment:
+   MYSQL_ROOT_PASSWORD: P4ssw0ed0!
+   MYSQL_DATABASE: wordpress
+   MYSQL_USER: wordpress
+   MYSQL_PASSWORD: P4ssw0ed0!
+
+ blog:
+  depends_on: 
+  - db
+  image: wordpress:latest
+  networks:
+   mysql_internal:
+   wordpress_public:
+  ports:
+  - "80:80"
+  environment:
+   WORDPRESS_DB_HOST: db:3306
+   WORDPRESS_DB_USER: wordpress
+   WORDPRESS_DB_PASSWORD: P4ssw0ed0!
+
+volumes:
+  db_data:
+networks:
+ mysql_internal:
+  internal: true
+ wordpress_public:
+
+
+docker stack deploy --compose-file docker-compose.yml wp
+
+[cloud_user@ip-10-0-1-158 ~]$ docker stack ls 
+NAME      SERVICES   ORCHESTRATOR
+wp        2          Swarm
+
+[cloud_user@ip-10-0-1-158 ~]$ docker service ls 
+ID             NAME      MODE         REPLICAS   IMAGE              PORTS
+kslyo6xmabup   wp_blog   replicated   0/1        wordpress:latest   *:80->80/tcp
+xfb62c4mkw4w   wp_db     replicated   0/1        mysql:5.7          
+
+
+[cloud_user@ip-10-0-1-158 ~]$ docker service ls 
+ID             NAME      MODE         REPLICAS   IMAGE              PORTS
+kslyo6xmabup   wp_blog   replicated   1/1        wordpress:latest   *:80->80/tcp
+xfb62c4mkw4w   wp_db     replicated   1/1        mysql:5.7          
+
+
+DOCKER SECURITY:
+OS(linux) level technologies
+When we create a container using 'docker container run', docker is going to create namespaces and control groups for that container
+
+1. Kernel namespaces
+Namespaces provide isolation for the container. i.e, processes running in that container cannot see or interact with other processes running in the host OS or other containers.
+This also gives each container it's own network stack. That means each container has no access to sockets or interfaces on other containers. This also means that containers can interact with each other using their network interfaces.
+When a docker container is created it's going to get it's own namespaces for process id (PID), network (NET), filesystem mount (Mount), interprocess communication (IPC), user and UTS.
+THIS COLLECTION OF NAMESPACES IS WHAT WE CALL A CONTAINER
+PID - isolates the process id tree of each container
+NET - this provides each container with it's own isolated network stack (network interface, ip address, port ranges and route tables)
+Mount - this provides each container an isolated file system
+IPC - this is used to share memory access between a container and it also isolates other containers and host 
+User - allows to map a user inside a container to a user on the host (ex: root on container to some user on host)
+UTS - this provides each container with it's own unique hostname 
+
+2. Control Groups (CGroups)
+They are responsible for accounting and limiting resources on a container. It also ensures that each container gets it's fair share of resources, this includes CPU, memory and disk IO.
+It also ensures that a container cannot go and exhaust the resources on the docker host and hence bring the system down.
+
+3. Capabilities:
+Each container is not limited regarding resource allocation, they can consume as much as resources as they can. But there is a risk of running a container as a root as it will have too many previliges, if we run it with user then it will have too few. Capabilities helps us sort this out.
+Root account is made up of a long list of capabilities, docker makes sure that there as sufficient capabilites to run a container and strips off all the unnecessary ones.
+
+4. Mandatory Access Control SE systems
+To handle to above case docker works with 2 'Mandatory Access Control SE systems', mainly appArmour and SE linux 
+appArmour : is responsible from protecting the OS and it's apps from secutiry threats
+SE(security enhanced) linux : Is responsible for security related to access control security policies.
+
+
+5. Seccomp (secure computing mode)
+It's a linux security feature that allows you to control the actions allowable through the container.
+Every container is given a default Seccomp profile which can be overwritten during container creation.
+
+
+Docker platform technologies:
+Swarm mode: easiest way to secure docker is to run it in swarm mode
+Security scanning: Docker security scanning is currently available in private repositories in docker hub or the docker trusted registry on-prem solution, this solution helps identify the code vulnarabilites within the images by performing binary level of scannig of the docker image and by checking it against a DB of known vulnarabilities.
+Docker content trust: This allows us to verify the integrity of the publisher of the image
+Secrets managements: This allows us to store sensitive data like passwords, api keys etc
+
+
+The easiest way to add security is by running docker in swarm mode, this gives us:
+- Cryptographic node id's
+- Mutual authentication via TLS
+- Secure join tokens with worker and manager nodes
+- CA configuration with automatic certificate rotation
+- Encrytped cluster stores 
+- Encrypted networking
+
+How Secrets work?
+
+- Secrets are only available in swarm mode because of the encrypted cluster store
+- Secret is stored in the encrypted cluster store and it runs on all the managers
+- A service is create and the secret is attached 
+- Secrets are encrypted in-flight while being delivered to the replica task
+- Secret is mount on the container of a service as an unencrypted file (found in /run/secrets)
+
+
+WORKING WITH DOCKER SECURITY
+
+Seccomp-
+
+docker container run --rm -it alpine sh      {using deffault profile here}
+mount /dev/sda1 /tmp  {Returns permission denied}
+
+exit 
+
+ 
+mkdir -p seccomp/profiles/chmod
+cd seccomp/profiles/chmod
+wget 'url' {here we're downloading the default seccomp profile for the moby project}
+default.json will be downloaded
+'syscalls' section in the json will consists of the set of commands we can execute.
+
+Starting a container with the seccomp flag
+docker container run --rm -it --security-opt seccomp=./default.json apline 
+
+
+Capabilities-
+We can either add a capability or drop it 
+docker container run --cap-add='capability' 'imagename' 'commad'
+docker container run --cap-drop='capability' 'imagename' 'commad'
+
+dropping makenode capability-
+docker container run --rm -it apline sh 
+mknod /dev/random2 c 1 8
+exit
+
+
+Now we drop the make node capability 
+docker container run --rm -it --cap-drop=MKNOD apline sh 
+mknod /dev/random2 c 1 8  {now this will result an error saying no permissions}
+exit
+
+
+How to limit the no.of resources a container can consume?
+By default there are not resource caps for a container, we need to introduce them as below
+
+docker container run --rm -d --name resource-limits --cpus=".5" --memory=512M --memory-swap=1G 'imageId'
+
+
+Creating a container using a docker bench security image:-
+The container will run a series of checks against our host and the ressult of these checks will be wither a pass or a no
+
+docker container run --rm -it --network host --pid host --userns host --cap-add audit_control -e DOCKER_CONTENT_TRUST=$DOCKER_CONTENT_TRUST -v /var/lib:/var/lib -v /var/run/docker.sock:/var/run/docker.sock -v /usr/lib/systemd:/usr/lib/systemd -v /etc:/etc --label docker_bench_security docker/docker-bench-security
+
+
+Docker content Trust:-
+Make it easy to verify the integrity and publisher of the image 
+
+signing an image-
+docker image tag 'dockerusername/imagename':latest 'dockerusername/dct':latest
+
+generating a key
+docker trust key generate 'dockerusername'
+enter password when prompted and hit enter
+'dockerusername'.pub key will be generated
+
+docker trust signer add --key 'dockerusername'.pub 'dockerusername' 'dockerusername/dct':latest
+                                 {signed key}          {username}        {image to sign}
+
+
+docket trust sign 'dockerusername/dct':latest
+
+export DOCKER_CONTENT_TRUST=1 {this will enable to only pull signed images from the hub}
+
+when DOCKER_CONTENT_TRUST is enabled it will only push/pull the images which are signed. To pull unsigned images, we need to disable it first.
+
+To enable DOCKER_CONTENT_TRUST always:
+vi /etc/docker/daemon.json
+{
+  "content-trust": {
+      "mode":"enforced"
+  }
+}
+
+
+WORKING WITH SECRETS:
+
+Secrets protect senditive data
+mkdir secrets
+cd secrets
+
+Creating Secret using STDIN-
+
+openssl rand -base64 20 | docker secret create my_secret_data -
+
+docker secret ls {to list secrets}
+
+Creating secret using file-
+
+openssl rand -base64 20 > secrets.txt
+
+docker secret create my_secret_data2 secrets.txt
+
+To use secrets the docker hosts must be running in swarm mode, i.e we need to create a service rather than a container
+
+docker service create --name redis --sercet my_secret_data redis:alpine 
+
+We can cat the contents of the secret by loggin into the swarm node the service was created on 
+
+docker container exec $(docker ps --filter name=redis -q) cat /run/secrets/my_secret_data
+                        {to get the id of the container
+                        that is attached to the service}
+
+To inspect a secret:
+docker secret inspect 'name of the secret'
+
+docker secret rm 'secret name' {to delete}
+
+Creating a wordpress blog which will access mysql, here the mysql credentials are stored in secret
+
+openssl rand -base64 20 > db_password.txt
+openssl rand -base64 20 > db_root_password.txt
+
+Here we're deploying the wordpress blog as a stack and the stack will create a service for wordpress and mysql 
+
+vi docker-compose.yml
+
+Before the above step we need to make sure to define how images use secrets
+
+version: '3.1'    {version 3.1 is mandatory for secrets}
+
+services:
+ db:
+  image: mysql:5.7
+  volumes:
+   - db_data:/var/lib/mysql
+  networks:
+   mysql_internal:
+    aliases: ["db"]
+  environment:
+   MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+   MYSQL_DATABASE: wordpress
+   MYSQL_USER: wordpress
+   MYSQL_PASSWORD_FILE: /run/secrets/db_password
+  secrets:
+   - db_root_password
+   - db_password
+ 
+ wordpress:
+  depends_on:
+   - db
+  image: workpress:latest
+  networks:
+   mysql_internal:
+     aliases: ["wordpress"]
+   wordpress_public:
+  ports:
+   - "8001:80"
+  environment:
+   WORDPRESS_DB_HOST: db:3306
+   WORDPRESS_DB_USER: wordpress
+   WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+  secrets:
+   - db_password
+  
+secrets:
+ db_password:
+  file: db_password.txt
+ db_root_password:
+  file: db_root_password.txt
+   
+volumes:
+ db_data:
+networks:
+ mysql_internal:
+  driver: "overlay"
+  internal: true
+ wordpress_public:
+  driver: "overlay"
+
+
+docker stack deploy --compose-file docker-compose.yml wp
+
+
+LAB: Using secrets to store passwords to create a mysql service   
+
+docker swarm join-token worker   {Execute in the master node to get the join token for worker nodes}
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-03h9rv0tyhktps2r5b6mko8ih2uwg8qjj05umymu6ouk28orpf-cx3gircc5wnwu3qptt0d2e2f9 10.0.1.245:2377
+              { execute this join token in the worker nodes to join them to the swarm}
+              
+ 
+openssl rand -base64 20 > mysql_root_password.txt   {openssl command to generate a password}
+
+docker secret create mysql_root_password mysql_root_password.txt   {creating a docker secret unsing the generated password}
+
+[cloud_user@ip-10-0-1-245 ~]$ docker secret ls 
+ID                          NAME                  DRIVER    CREATED         UPDATED
+o0jgpn2t4yhdz08g0w1f51rnh   mysql_root_password             6 seconds ago   6 seconds ago
+
+[cloud_user@ip-10-0-1-245 ~]$ openssl rand -base64 20 > mysql_password.txt
+[cloud_user@ip-10-0-1-245 ~]$ docker secret create mysql_password mysql_password.txt
+gn749aeerpqek0deojyn9bk6b
+
+[cloud_user@ip-10-0-1-245 ~]$ docker secret ls 
+ID                          NAME                  DRIVER    CREATED          UPDATED
+gn749aeerpqek0deojyn9bk6b   mysql_password                  2 seconds ago    2 seconds ago
+o0jgpn2t4yhdz08g0w1f51rnh   mysql_root_password             46 seconds ago   46 seconds ago
+
+docker network create -d overlay mysql_private {create an overlay private network}
+
+docker service create --name mysql_secrets --replicas 1 --network mysql_private --mount type=volume,destination=/var/lib/mysql --secret mysql_root_password --secret mysql_password -e MYSQL_ROOT_PASSWORD_FILE="/run/secrets/mysql_root_password" -e MYSQL_PASSWORD_FILE="/run/secrets/mysql_password" -e MYSQL_USER="myUser" -e MYSQL_DATABASE="myDB" mysql:5.7
+dj3p059vwgb8xof4tj96z04x2
+overall progress: 1 out of 1 tasks 
+1/1: running   [==================================================>] 
+
+
+==========================================================================================================================================
+                                                          *****COURSE END*****
+==========================================================================================================================================
+
+Next in line courses:
+1. Learn Docker by doing
+2. Docker certified associate prep course
+3. Kubernetes quick start
+4. Kubernetes essentials
+5. Monitoring Kubernets with Prometheus 
+
+pre-reqs:
+1. Kubernetes the hard way
+2. Implementing a full CI/CD pipeline
+
+
+
+                                                        LEARN DOCKER BY DOING   
+
+==> Setting up docker environment:
+
+Install daemon and cli from docker repo on the local machine 
+
+docker daemon - This is how we'll interact with the docker containers
+docker cli    - This is how we'll interact with the docker daemon
+
+Start and enable docker daemon and setup a user account to interact with the docker daemon
+
+
+Install the dependency packages for docker :-
+
+sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+
+Add the docker repo specific to the OS we're using :-
+
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+Install docker community edition:-
+
+sudo yum install docker-ce
+
+To enable docker to start during run time and start it now:-
+
+sudo systemctl enable --now docker
+
+Configure our use to be allowed to use docker without sudo permissions:-
+
+sudo usermod -aG docker 'username'     {we do this by adding our user to the docker group}
+
+
+==> Working with pre-built docker images:
+
+docker pull httpd:2.4  {to pull the image from docker hub}
+
+docker image ls
+REPOSITORY   TAG       IMAGE ID       CREATED      SIZE
+httpd        2.4       464fdc577ef4   9 days ago   138MB
+
+docker run --name httpd -p 8080:80  -d 464fdc577ef4
+
+docker ps 
+CONTAINER ID   IMAGE          COMMAND              CREATED         STATUS         PORTS                  NAMES
+922caef6ca41   464fdc577ef4   "httpd-foreground"   4 seconds ago   Up 2 seconds   0.0.0.0:8080->80/tcp   httpd
+
+curl http://localhost:8080
+<html><body><h1>It works!</h1></body></html>
+
+To run a web page from git in the container:-
+
+git clone https://github.com/linuxacademy/content-widget-factory-inc
+
+ls
+content-widget-factory-inc  init_pass
+
+ls content-widget-factory-inc/
+web
+
+cd content-widget-factory-inc/
+
+docker ps 
+CONTAINER ID   IMAGE          COMMAND              CREATED         STATUS         PORTS                  NAMES
+922caef6ca41   464fdc577ef4   "httpd-foreground"   3 minutes ago   Up 3 minutes   0.0.0.0:8080->80/tcp   httpd
+
+the previously started container is running, we need to stop it 
+
+docker stop 922caef6ca41
+
+docker ps 
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+
+docker ps -a
+CONTAINER ID   IMAGE          COMMAND              CREATED         STATUS                      PORTS     NAMES
+922caef6ca41   464fdc577ef4   "httpd-foreground"   4 minutes ago   Exited (0) 18 seconds ago             httpd
+
+{eventhough the container is stopped, the container process will be running in the background. We need to remove the container to run another container with the same name}
+
+docker rm 922caef6ca41
+922caef6ca41
+[cloud_user@ip-10-0-1-37 content-widget-factory-inc]$ docker ps -a
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+
+docker run --name httpd -p 8080:80 -v $(pwd)/web:/usr/local/apache2/htdocs:ro -d 464fdc577ef4
+{this will run a container with the httpd image me downloaded earlier and mount the /web directory to the /usr/local/apache2/htdocs directory in the container and then with :ro we're specifying that the content is read only}
+
+
+Running multiple containers in the same host:-
+
+docker pull nginx {pulls the latest image from the dockerhub}
+
+docker images
+REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
+nginx        latest    35c43ace9216   14 hours ago   133MB
+httpd        2.4       464fdc577ef4   9 days ago     138MB
+
+docker run --name nginx -p 8081:80 -d nginx {running container called nginx on port 8081 from the image named nginx}
+
+curl http://localhost:8081
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+
+Mounting the app to nginx 
+
+docker ps 
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                  NAMES
+2f8766dc44d9   nginx          "/docker-entrypoint.…"   2 minutes ago    Up 2 minutes    0.0.0.0:8081->80/tcp   nginx
+947b4300cd7e   464fdc577ef4   "httpd-foreground"       11 minutes ago   Up 11 minutes   0.0.0.0:8080->80/tcp   httpd
+
+docker stop nginx 
+nginx
+
+docker ps 
+CONTAINER ID   IMAGE          COMMAND              CREATED          STATUS          PORTS                  NAMES
+947b4300cd7e   464fdc577ef4   "httpd-foreground"   12 minutes ago   Up 12 minutes   0.0.0.0:8080->80/tcp   httpd
+
+docker ps -a
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS                     PORTS                  NAMES
+2f8766dc44d9   nginx          "/docker-entrypoint.…"   3 minutes ago    Exited (0) 4 seconds ago                          nginx
+947b4300cd7e   464fdc577ef4   "httpd-foreground"       12 minutes ago   Up 12 minutes              0.0.0.0:8080->80/tcp   httpd
+
+docker rm nginx
+nginx
+
+docker ps -a
+CONTAINER ID   IMAGE          COMMAND              CREATED          STATUS          PORTS                  NAMES
+947b4300cd7e   464fdc577ef4   "httpd-foreground"   12 minutes ago   Up 12 minutes   0.0.0.0:8080->80/tcp   httpd
+
+docker run --name nginx -v $(pwd)/web:/usr/share/nginx/html:ro -p 8081:80 -d nginx
+a033f00cb0ec15831adae72099c5cacbc294f67ab4f41babc63638cba84d4aca
+
+docker ps -a
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                  NAMES
+a033f00cb0ec   nginx          "/docker-entrypoint.…"   4 seconds ago    Up 3 seconds    0.0.0.0:8081->80/tcp   nginx
+947b4300cd7e   464fdc577ef4   "httpd-foreground"       15 minutes ago   Up 15 minutes   0.0.0.0:8080->80/tcp   httpd
+
+
+==> Handcrafting an image by combining different images and layers:
+
+docker pull httpd:2.4
+
+docker run -d --name webtemplate httpd:2.4
+
+docker ps 
+CONTAINER ID   IMAGE       COMMAND              CREATED         STATUS         PORTS     NAMES
+b225971add71   httpd:2.4   "httpd-foreground"   4 seconds ago   Up 3 seconds   80/tcp    webtemplate
+
+docker exec -it webtemplate bash 
+root@b225971add71:/usr/local/apache2# apt-get update -y
+root@b225971add71:/usr/local/apache2# apt-get install git -y
+
+git clone https://github.com/linuxacademy/content-widget-factory-inc.git /tmp/widget-factory-inc
+
+ls -l /tmp/widget-factory-inc/
+total 0
+drwxr-xr-x. 3 root root 93 Feb 18 09:59 web
+
+ls -l htdocs/
+total 4
+-rw-r--r--. 1 root src 45 Jun 11  2007 index.html
+
+root@b225971add71:/usr/local/apache2# rm htdocs/index.html 
+
+root@b225971add71:/usr/local/apache2# cp -r /tmp/widget-factory-inc/web/* htdocs/
+
+root@b225971add71:/usr/local/apache2# exit
+
+docker ps 
+CONTAINER ID   IMAGE       COMMAND              CREATED         STATUS         PORTS     NAMES
+b225971add71   httpd:2.4   "httpd-foreground"   4 minutes ago   Up 4 minutes   80/tcp    webtemplate
+
+docker commit b225971add71 example/widgetfactory:v1                            {to create an image from a container}
+sha256:2abe70e478658028962364e72e96994a028c3e1f9527155c27c94b5493154632
+
+docker images
+REPOSITORY              TAG       IMAGE ID       CREATED         SIZE
+example/widgetfactory   v1        2abe70e47865   5 seconds ago   240MB
+httpd                   2.4       464fdc577ef4   9 days ago      138MB
+
+{the size of the new image is 240MB, we can reduce it by removing the unwanted files/tools from the container image}
+
+docker exec -it webtemplate bash 
+root@b225971add71:/usr/local/apache2# 
+root@b225971add71:/usr/local/apache2# rm -rf /tmp/widget-factory-inc/
+.git/ web/  
+root@b225971add71:/usr/local/apache2# rm -rf /tmp/widget-factory-inc/
+root@b225971add71:/usr/local/apache2# apt remove git -y && apt autoremove -y && apt clean 
+root@b225971add71:/usr/local/apache2# exit
+
+docker ps 
+CONTAINER ID   IMAGE       COMMAND              CREATED         STATUS         PORTS     NAMES
+b225971add71   httpd:2.4   "httpd-foreground"   7 minutes ago   Up 7 minutes   80/tcp    webtemplate
+
+docker commit b225971add71 example/widgetfactory:v2
+sha256:2598408e284a4525c90de851b59ee7c943dda577aae8df88a646e87585837d9a
+
+docker images
+REPOSITORY              TAG       IMAGE ID       CREATED         SIZE
+example/widgetfactory   v2        2598408e284a   5 seconds ago   158MB
+example/widgetfactory   v1        2abe70e47865   2 minutes ago   240MB
+httpd                   2.4       464fdc577ef4   9 days ago      138MB
+
+docker rmi example/widgetfactory:v1
+Untagged: example/widgetfactory:v1
+Deleted: sha256:2abe70e478658028962364e72e96994a028c3e1f9527155c27c94b5493154632
+Deleted: sha256:d512305fcd6454c6f75c96b00541f582a581f4cc7eb6fcb57b8a9b95a034d433
+
+[cloud_user@ip-10-0-1-63 ~]$ docker images
+REPOSITORY              TAG       IMAGE ID       CREATED              SIZE
+example/widgetfactory   v2        2598408e284a   About a minute ago   158MB
+httpd                   2.4       464fdc577ef4   9 days ago           138MB
+
+[cloud_user@ip-10-0-1-63 ~]$ docker run --name web1 -d -p 8081:80 example/widgetfactory:v2
+4bf47ed2b16e4010c7b54962c04f4aca82ece723ff3abd833e5ca68a14e288c8
+[cloud_user@ip-10-0-1-63 ~]$ docker run --name web2 -d -p 8082:80 example/widgetfactory:v2
+112d7d897f8725e7e66ac6d607538fa01fa0b5c420a5f8c0842859f6870e0bcf
+[cloud_user@ip-10-0-1-63 ~]$ docker run --name web3 -d -p 8083:80 example/widgetfactory:v2
+b69319a564f109acbcb0cb7487f3c702d2d8ccfaef11d6964ad45f2ce87e8b89
+
+docker ps 
+CONTAINER ID   IMAGE                      COMMAND              CREATED          STATUS          PORTS                  NAMES
+b69319a564f1   example/widgetfactory:v2   "httpd-foreground"   7 seconds ago    Up 6 seconds    0.0.0.0:8083->80/tcp   web3
+112d7d897f87   example/widgetfactory:v2   "httpd-foreground"   15 seconds ago   Up 14 seconds   0.0.0.0:8082->80/tcp   web2
+4bf47ed2b16e   example/widgetfactory:v2   "httpd-foreground"   30 seconds ago   Up 29 seconds   0.0.0.0:8081->80/tcp   web1
+b225971add71   httpd:2.4                  "httpd-foreground"   10 minutes ago   Up 10 minutes   80/tcp                 webtemplate
+
+docker stop webtemplate
+webtemplate
+
+docker ps 
+CONTAINER ID   IMAGE                      COMMAND              CREATED          STATUS          PORTS                  NAMES
+b69319a564f1   example/widgetfactory:v2   "httpd-foreground"   25 seconds ago   Up 25 seconds   0.0.0.0:8083->80/tcp   web3
+112d7d897f87   example/widgetfactory:v2   "httpd-foreground"   33 seconds ago   Up 32 seconds   0.0.0.0:8082->80/tcp   web2
+4bf47ed2b16e   example/widgetfactory:v2   "httpd-foreground"   48 seconds ago   Up 47 seconds   0.0.0.0:8081->80/tcp   web1
+
+{now, we ca connect to each of these containers which are running the same application, seperately on ports 8081,8082,8083} 
+
+
+
+==> Storing container data in docker volumes:
+
+docker images
+REPOSITORY   TAG       IMAGE ID       CREATED         SIZE
+httpd        2.4       464fdc577ef4   9 days ago      138MB
+bash         latest    a3cae8598d52   8 weeks ago     13.6MB
+postgres     12.1      cf879a45faaa   12 months ago   394MB
+
+docker volume ls 
+DRIVER    VOLUME NAME
+
+docker run -d --name db1 postgres:12.1
+5dddc75fc0d81b29ef8b21f377491430d700a595418c2b2098cd8b165369b2f6
+
+docker run -d --name db2 postgres:12.1
+a0b4142253a6bcd055346f5c826b4e531ae769bb53a0a4a1a474d50f9b4089bf
+
+docker ps 
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS          PORTS      NAMES
+a0b4142253a6   postgres:12.1   "docker-entrypoint.s…"   4 seconds ago    Up 3 seconds    5432/tcp   db2
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   14 seconds ago   Up 12 seconds   5432/tcp   db1
+
+docker volume ls 
+DRIVER    VOLUME NAME
+local     554c706dfc8b36b792a06c70f8257f4560461c1fb14d7f04e1be280cc967dd1e
+local     c31a3b891eaa1745f1e30185b65ac7651541a480b5c123b6c591fd6db5a62092
+
+{postgres image will create a local volume while being initialised}
+
+docker inspect db1 -f '{{ json .Mounts }}' | python -m json.tool
+[
+    {
+        "Destination": "/var/lib/postgresql/data",
+        "Driver": "local",
+        "Mode": "",
+        "Name": "c31a3b891eaa1745f1e30185b65ac7651541a480b5c123b6c591fd6db5a62092",
+        "Propagation": "",
+        "RW": true,
+        "Source": "/var/lib/docker/volumes/c31a3b891eaa1745f1e30185b65ac7651541a480b5c123b6c591fd6db5a62092/_data",
+        "Type": "volume"
+    }
+]
+
+
+docker inspect db2 -f '{{ json .Mounts }}' | python -m json.tool
+[
+    {
+        "Destination": "/var/lib/postgresql/data",
+        "Driver": "local",
+        "Mode": "",
+        "Name": "554c706dfc8b36b792a06c70f8257f4560461c1fb14d7f04e1be280cc967dd1e",
+        "Propagation": "",
+        "RW": true,
+        "Source": "/var/lib/docker/volumes/554c706dfc8b36b792a06c70f8257f4560461c1fb14d7f04e1be280cc967dd1e/_data",
+        "Type": "volume"
+    }
+]
+
+
+
+docker run -d --rm --name dbtemp postgres:12.1
+              {here we're using rm flag to remove the container/volume once it's completed being used} 
+
+
+docker ps
+CONTAINER ID   IMAGE           COMMAND                  CREATED         STATUS         PORTS      NAMES
+5db6ba77d6d3   postgres:12.1   "docker-entrypoint.s…"   4 seconds ago   Up 3 seconds   5432/tcp   dbtemp
+a0b4142253a6   postgres:12.1   "docker-entrypoint.s…"   3 minutes ago   Up 3 minutes   5432/tcp   db2
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   4 minutes ago   Up 4 minutes   5432/tcp   db1
+
+
+docker inspect dbtemp -f '{{ json .Mounts }}' | python -m json.tool
+[
+    {
+        "Destination": "/var/lib/postgresql/data",
+        "Driver": "local",
+        "Mode": "",
+        "Name": "35a0fd06aa1520fe4cca4af4c5f3ddcc3aa858b44a377037d18634861a54fc7b",
+        "Propagation": "",
+        "RW": true,
+        "Source": "/var/lib/docker/volumes/35a0fd06aa1520fe4cca4af4c5f3ddcc3aa858b44a377037d18634861a54fc7b/_data",
+        "Type": "volume"
+    }
+]
+
+
+
+docker stop db2 dbtemp
+db2
+dbtemp
+
+docker ps 
+CONTAINER ID   IMAGE           COMMAND                  CREATED         STATUS         PORTS      NAMES
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   6 minutes ago   Up 6 minutes   5432/tcp   db1
+
+docker ps -a
+CONTAINER ID   IMAGE           COMMAND                  CREATED         STATUS                     PORTS      NAMES
+a0b4142253a6   postgres:12.1   "docker-entrypoint.s…"   5 minutes ago   Exited (0) 6 seconds ago              db2
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   6 minutes ago   Up 6 minutes               5432/tcp   db1
+
+docker volume ls 
+DRIVER    VOLUME NAME
+local     554c706dfc8b36b792a06c70f8257f4560461c1fb14d7f04e1be280cc967dd1e
+local     c31a3b891eaa1745f1e30185b65ac7651541a480b5c123b6c591fd6db5a62092
+{here. the volume wrt dbtemp was deleted cos of the --rm flag but the volume of db2 has not been deleted}
+
+docker volume create website
+website
+
+docker volume ls 
+DRIVER    VOLUME NAME
+local     554c706dfc8b36b792a06c70f8257f4560461c1fb14d7f04e1be280cc967dd1e
+local     c31a3b891eaa1745f1e30185b65ac7651541a480b5c123b6c591fd6db5a62092
+local     website
+
+sudo cp -r /home/cloud_user/widget-factory-inc/web/* /var/lib/docker/volumes/website/_data/
+[sudo] password for cloud_user: 
+{here, we're copying the website code we donwloaded from github to the docker volumes dir}
+
+ls /var/lib/docker/volumes/website/_data/
+img  index.html  quote.html  support.html  widgets.html
+
+docker run -d --name web1 -p 80:80 -v website:/usr/local/apache2/htdocs:ro httpd:2.4
+
+docker run -d --name webtemp --rm -v website:/usr/local/apache2/htdocs:ro httpd:2.4
+
+docker ps 
+CONTAINER ID   IMAGE           COMMAND                  CREATED              STATUS              PORTS                NAMES
+0cce13a0f010   httpd:2.4       "httpd-foreground"       5 seconds ago        Up 4 seconds        80/tcp               webtemp
+3d2f7b84260f   httpd:2.4       "httpd-foreground"       About a minute ago   Up About a minute   0.0.0.0:80->80/tcp   web1
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   11 minutes ago       Up 11 minutes       5432/tcp             db1
+
+docker exec -it webtemp bash 
+root@0cce13a0f010:/usr/local/apache2# 
+
+root@0cce13a0f010:/usr/local/apache2# ls htdocs/
+img  index.html  quote.html  support.html  widgets.html
+
+root@0cce13a0f010:/usr/local/apache2# exit
+
+docker stop webtemp
+
+docker ps
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS          PORTS                NAMES
+3d2f7b84260f   httpd:2.4       "httpd-foreground"       2 minutes ago    Up 2 minutes    0.0.0.0:80->80/tcp   web1
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   13 minutes ago   Up 13 minutes   5432/tcp             db1
+
+docker ps -a
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS                     PORTS                NAMES
+3d2f7b84260f   httpd:2.4       "httpd-foreground"       3 minutes ago    Up 3 minutes               0.0.0.0:80->80/tcp   web1
+a0b4142253a6   postgres:12.1   "docker-entrypoint.s…"   13 minutes ago   Exited (0) 7 minutes ago                        db2
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   13 minutes ago   Up 13 minutes              5432/tcp             db1
+
+docker volume ls 
+DRIVER    VOLUME NAME
+local     554c706dfc8b36b792a06c70f8257f4560461c1fb14d7f04e1be280cc967dd1e
+local     c31a3b891eaa1745f1e30185b65ac7651541a480b5c123b6c591fd6db5a62092
+local     website
+
+{here there were 2 containers using the volume website. One was set with rm flag and the other was not set. So even if one container with --rm flag has been stopped the volume was not removed cos another container was using it}
+
+
+docker volume prune
+WARNING! This will remove all local volumes not used by at least one container.
+Are you sure you want to continue? [y/N] y
+
+{prune will remove all the unused volumes}
+
+docker volume ls 
+DRIVER    VOLUME NAME
+local     554c706dfc8b36b792a06c70f8257f4560461c1fb14d7f04e1be280cc967dd1e
+local     c31a3b891eaa1745f1e30185b65ac7651541a480b5c123b6c591fd6db5a62092
+local     website
+
+docker ps -a
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS                     PORTS                NAMES
+3d2f7b84260f   httpd:2.4       "httpd-foreground"       4 minutes ago    Up 4 minutes               0.0.0.0:80->80/tcp   web1
+a0b4142253a6   postgres:12.1   "docker-entrypoint.s…"   14 minutes ago   Exited (0) 8 minutes ago                        db2
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   14 minutes ago   Up 14 minutes              5432/tcp             db1
+
+{here the volume was not removed cos though the container db2 was stopped, it's process was still running and hence the volume attached to it was not removed}
+
+docker rm db2
+db2
+
+docker ps -a
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS          PORTS                NAMES
+3d2f7b84260f   httpd:2.4       "httpd-foreground"       4 minutes ago    Up 4 minutes    0.0.0.0:80->80/tcp   web1
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   15 minutes ago   Up 15 minutes   5432/tcp             db1
+
+docker volume prune
+WARNING! This will remove all local volumes not used by at least one container.
+Are you sure you want to continue? [y/N] y
+Deleted Volumes:
+554c706dfc8b36b792a06c70f8257f4560461c1fb14d7f04e1be280cc967dd1e
+Total reclaimed space: 41.43MB
+
+docker volume ls 
+DRIVER    VOLUME NAME
+local     c31a3b891eaa1745f1e30185b65ac7651541a480b5c123b6c591fd6db5a62092
+local     website
+
+docker ps 
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS          PORTS                NAMES
+3d2f7b84260f   httpd:2.4       "httpd-foreground"       5 minutes ago    Up 5 minutes    0.0.0.0:80->80/tcp   web1
+5dddc75fc0d8   postgres:12.1   "docker-entrypoint.s…"   15 minutes ago   Up 15 minutes   5432/tcp             db1
+
+docker volume inspect website
+[
+    {
+        "CreatedAt": "2021-02-18T05:29:46-05:00",
+        "Driver": "local",
+        "Labels": {},
+        "Mountpoint": "/var/lib/docker/volumes/website/_data",
+        "Name": "website",
+        "Options": {},
+        "Scope": "local"
+    }
+]
+
+
+tar czf /tmp/website_$(date +%Y-%m-%d-%H%M).tgz -C /var/lib/docker/volumes/website/_data/ .
+{here we're using the -C flag to specify which directory needs to be tar'd and with '.' we're specifying all the content needs to be tar'd}
+
+ls -l /tmp/website_2021-02-18-0539.tgz 
+-rw-r--r--. 1 root root 11364 Feb 18 05:39 /tmp/website_2021-02-18-0539.tgz
+
+tar tf /tmp/website_2021-02-18-0539.tgz
+./
+./img/
+./img/LargeWidget.png
+./img/MediumWidget.png
+./img/SmallWidget.png
+./index.html
+./quote.html
+./support.html
+./widgets.html
+
+
+{backing up from a container}
+
+docker run -it --rm -v website:/website -v /tmp:/backup bash tar czf /backup/website_$(date +%Y-%m-%d-%H%M).tgz -C /website .
+
+
+==> Storing data in Amazon S3
+
+Install aws cli 
+pip install --upgrade --user awscli
+
+aws configure
+enter AWS access key Id, aws secret access key, default region and default output format
+
+now we need to copy the aws credentials and configuration to root dir 
+
+sudo cp -r ~/.aws /root
+
+To mount the S3 bucket on to the system we need to install the s3fs-fuse package 
+sudo yum install s3fs-fuse -y
+
+mkdir /tmp/widget-factory
+export BUCKET=widgetfactory-d8b92450  {name of the S3 bucket}
+
+sudo s3fs $BUCKET /tmp/widget-factory -o allow_other default_acl=public-read use_cache=/tmp/s3fs
+
+cp -r ~/widget-factory/web/* 
+
+
+==> Storing data in Google cloud storage bucket:
+
+export projnum=$(curl http://metadata.google.internal/computeMetadata/v1/project/numeric-project-id -sH "Metadata-Flavor: Google")
+{this will fetch the project number associated with the gcloud setup on the server}
+
+echo $projnum 
+586022299631
+
+export BUCKET="widgetfactory-${projnum}"
+
+echo $BUCKET 
+widgetfactory-586022299631
+
+gsutil mb -l us-central1 -c standard gs://$BUCKET
+Creating gs://widgetfactory-586022299631/...
+
+cat /etc/yum.repos.d/gcsfuse.repo 
+[gcsfuse]
+name=gcsfuse (packages.cloud.google.com)
+baseurl=https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+sudo yum install -y gcsfuse
+
+sudo sed -ri 's/# user_allow_other/user_allow_other/' /etc/fuse.conf
+
+cat /etc/fuse.conf
+# mount_max = 1000
+user_allow_other
+{we do this to allow the user to mount the bucket}
+
+sudo mkdir /mnt/widget-factory /tmp/gcs
+[cloud_user@widget-factory ~]$ sudo chown cloud_user: /tmp/gcs /mnt/widget-factory/
+[cloud_user@widget-factory ~]$ gcsfuse -o allow_other --temp-dir=/tmp/gcs $BUCKET /mnt/widget-factory/
+Using mount point: /mnt/widget-factory
+Opening GCS connection...
+Opening bucket...
+Mounting file system...
+File system has been successfully mounted.
+
+
+gsutil ls gs://$BUCKET
+gs://widgetfactory-586022299631/index.html
+gs://widgetfactory-586022299631/quote.html
+gs://widgetfactory-586022299631/support.html
+gs://widgetfactory-586022299631/widgets.html
+gs://widgetfactory-586022299631/img/
+
+docker run -d --name web1 --mount type=bind,source=/mnt/widget-factory,target=/usr/local/apache2/htdocs,readonly  -p 80:80 httpd:2.4
+b9b3672773a30445cb89f8cc70068c29a60ad29d3068ec2714376f79a770ae74
+
+
+
+NETWORKING:
+
+docker provides 5 types of networks which are available through plugins for our container to connect to the outside world
+
+bridge , host , none(no-connectivity) --> these are default networks created by docker
+
+bridge:- Are used to provide networking to a set off containers that make up an application while also providign isolation from other applications and containers
+host:- This will allow the container to directly connect to the host's network 
+
+docker network ls 
+NETWORK ID     NAME      DRIVER    SCOPE
+de3f646e75d2   bridge    bridge    local
+7fb7b4079734   host      host      local
+ac838585424b   none      null      local
+
+docker run -d --name web1 httpd:2.4
+5cd43bc1a1605d15bb33d8a0a22df3c56b9aabc31e08e390f5b43b6953b4f506
+{if we run a container without specifying the network then it will be created in the default network}
+
+docker inspect web1
+"Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "NetworkID": "de3f646e75d2f2b878b22331324ef7645c9f37c5f8ba3ea89c12d120e84a935a",
+                    "EndpointID": "838fae72b32f6d9a51c09871025792affc708fb731ac9d77e00e2512e4ef33db",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.2",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "MacAddress": "02:42:ac:11:00:02",
+                    "DriverOpts": null
+
+{here, it is created in the bridge network by default}
+
+docker run --rm -it busybox  {running busy box without specifying any network}
+/ # ipaddr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+6: eth0@if7: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue 
+    link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.3/16 brd 172.17.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+/ # 
+/ # 
+/ # 
+/ #  wget  172.17.0.2
+Connecting to 172.17.0.2 (172.17.0.2:80)
+saving to 'index.html'
+index.html           100% |***********************************************************************************************|    45  0:00:00 ETA
+'index.html' saved
+/ # 
+/ # 
+/ # exit
+
+
+{As we can see, it ahs the ip 172.17.0.3, which is in the same network as the one we created before without specifying the network type. That is the reason we're able to wget 172.17.0.2:80 which is the ip:port of the https:2.4 container we created earlier without specifying the network}
+
+ docker ps -a
+CONTAINER ID   IMAGE       COMMAND              CREATED         STATUS         PORTS     NAMES
+5cd43bc1a160   httpd:2.4   "httpd-foreground"   2 minutes ago   Up 2 minutes   80/tcp    web1
+
+docker network create test_application 
+9c663f7bfb3f2c1ea09fa9542f06c474e31ff95c02334598aa3af0716f365f7a
+
+docker network ls 
+NETWORK ID     NAME               DRIVER    SCOPE
+de3f646e75d2   bridge             bridge    local
+7fb7b4079734   host               host      local
+ac838585424b   none               null      local
+9c663f7bfb3f   test_application   bridge    local               {here we can see that since we didn't specify any driver, it was created as a bridge network}
+
+docker run -d --name web2 --network test_application httpd:2.4
+ccab2400222e6baae7defcdacdad40a95f5480d8e331394c61f2f355cd32a9cc
+
+docker ps -a
+CONTAINER ID   IMAGE       COMMAND              CREATED         STATUS         PORTS     NAMES
+ccab2400222e   httpd:2.4   "httpd-foreground"   6 seconds ago   Up 4 seconds   80/tcp    web2
+5cd43bc1a160   httpd:2.4   "httpd-foreground"   3 minutes ago   Up 3 minutes   80/tcp    web1
+
+docker inspect web2
+
+"Networks": {
+                "test_application": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "ccab2400222e"
+                    ],
+                    "NetworkID": "9c663f7bfb3f2c1ea09fa9542f06c474e31ff95c02334598aa3af0716f365f7a",
+                    "EndpointID": "b692dcf994cb7702a9379d2a5f078958c615601a0605125658c8f999f032bb5a",
+                    "Gateway": "172.18.0.1",
+                    "IPAddress": "172.18.0.2",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "MacAddress": "02:42:ac:12:00:02",
+                    "DriverOpts": null
+{here, we can see that the ip address is not in the same range as the previous networks even though we didn't specify the type of network. That is because we've specified a name for the network, so though it's a bridge network, it will be in a different IP range }
+
+docker run --rm -it --network test_application busybox
+
+/ # 
+/ # ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+11: eth0@if12: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue 
+    link/ether 02:42:ac:12:00:03 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.0.3/16 brd 172.18.255.255 scope global eth0          {since we're using the same network as above the IP is in same range}
+       valid_lft forever preferred_lft forever
+/ # 
+/ # 
+/ # ping 172.18.0.2
+PING 172.18.0.2 (172.18.0.2): 56 data bytes
+64 bytes from 172.18.0.2: seq=0 ttl=64 time=0.119 ms
+64 bytes from 172.18.0.2: seq=1 ttl=64 time=0.096 ms
+64 bytes from 172.18.0.2: seq=2 ttl=64 time=0.095 ms
+^C
+--- 172.18.0.2 ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 0.095/0.103/0.119 ms
+/ # 
+/ # 
+/ # 
+/ # 
+/ # 
+/ # ping web2
+PING web2 (172.18.0.2): 56 data bytes
+64 bytes from 172.18.0.2: seq=0 ttl=64 time=0.078 ms
+64 bytes from 172.18.0.2: seq=1 ttl=64 time=0.101 ms
+^C
+--- web2 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 0.078/0.089/0.101 ms
+/ # 
+/ # 
+/ # 
+/ # 
+/ # wget .
+wget: bad address '.'
+/ # 
+/ # wget web2
+Connecting to web2 (172.18.0.2:80)
+saving to 'index.html'
+index.html           100% |***********************************************************************************************|    45  0:00:00 ETA
+'index.html' saved
+/ # 
+/ # 
+/ # ping 17.17.0.2
+PING 17.17.0.2 (17.17.0.2): 56 data bytes
+
+
+
+
+^C
+--- 17.17.0.2 ping statistics ---
+5 packets transmitted, 0 packets received, 100% packet loss
+/ # exit
+
+
+docker run -d --name web3 --network host httpd:2.4                       {here we're running from the host network}
+0cc0a174aeaf00fbd1f670e6d88ee55f11ea9b2363a8b8ffc6766e29861fa203
+
+docker ps -a
+CONTAINER ID   IMAGE       COMMAND              CREATED         STATUS         PORTS     NAMES
+0cc0a174aeaf   httpd:2.4   "httpd-foreground"   8 seconds ago   Up 7 seconds             web3
+ccab2400222e   httpd:2.4   "httpd-foreground"   4 minutes ago   Up 4 minutes   80/tcp    web2
+5cd43bc1a160   httpd:2.4   "httpd-foreground"   8 minutes ago   Up 8 minutes   80/tcp    web1
+
+wget localhost 
+--2021-02-23 03:42:06--  http://localhost/
+Resolving localhost (localhost)... ::1, 127.0.0.1
+Connecting to localhost (localhost)|::1|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 45 [text/html]
+Saving to: ‘index.html’
+
+100%[=====================================================================================================>] 45          --.-K/s   in 0s      
+
+2021-02-23 03:42:06 (7.40 MB/s) - ‘index.html’ saved [45/45]
+
+docker stop web3
+web3
+
+[cloud_user@ip-10-0-1-96 ~]$ wget localhost 
+--2021-02-23 03:42:25--  http://localhost/
+Resolving localhost (localhost)... ::1, 127.0.0.1
+Connecting to localhost (localhost)|::1|:80... failed: Connection refused.
+Connecting to localhost (localhost)|127.0.0.1|:80... failed: Connection refused.
+
+[cloud_user@ip-10-0-1-96 ~]$ docker start web3
+web3
+
+[cloud_user@ip-10-0-1-96 ~]$ wget localhost 
+--2021-02-23 03:42:34--  http://localhost/
+Resolving localhost (localhost)... ::1, 127.0.0.1
+Connecting to localhost (localhost)|::1|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 45 [text/html]
+Saving to: ‘index.html.1’
+
+100%[=====================================================================================================>] 45          --.-K/s   in 0s      
+
+2021-02-23 03:42:34 (6.40 MB/s) - ‘index.html.1’ saved [45/45]
+
+
+docker run --rm -it --network host busybox 
+
+/ # ping web3
+ping: bad address 'web3'
+
+/ # wget localhost
+Connecting to localhost (127.0.0.1:80)
+saving to 'index.html'
+index.html           100% |***********************************************************************************************|    45  0:00:00 ETA
+'index.html' saved
+
+/ # ping 172.18.0.2
+PING 172.18.0.2 (172.18.0.2): 56 data bytes
+64 bytes from 172.18.0.2: seq=0 ttl=64 time=0.107 ms
+64 bytes from 172.18.0.2: seq=1 ttl=64 time=0.092 ms
+
+/ # ping 172.17.0.2
+PING 172.17.0.2 (172.17.0.2): 56 data bytes
+64 bytes from 172.17.0.2: seq=0 ttl=64 time=0.119 ms
+64 bytes from 172.17.0.2: seq=1 ttl=64 time=0.097 ms
+
+																																																																																																																			
+
+==> Dockerizing a flask application:
+
+[cloud_user@ip-10-0-1-70 ~]$ cd notes/
+
+[cloud_user@ip-10-0-1-70 notes]$ ls
+config.py  __init__.py  models.py  Pipfile  Pipfile.lock  static  templates
+
+[cloud_user@ip-10-0-1-70 notes]$ ls -la
+total 40
+drwxr-xr-x. 4 cloud_user cloud_user   155 Feb 23 07:17 .
+drwx------. 4 cloud_user cloud_user   141 Feb 23 07:17 ..
+-rw-r--r--. 1 cloud_user cloud_user   420 Feb 23 07:17 config.py
+-rw-r--r--. 1 cloud_user cloud_user   185 Feb 23 07:17 .env
+-rw-r--r--. 1 cloud_user cloud_user  1347 Feb 23 07:17 .gitignore
+-rw-r--r--. 1 cloud_user cloud_user  5087 Feb 23 07:17 __init__.py
+-rw-r--r--. 1 cloud_user cloud_user   971 Feb 23 07:17 models.py
+-rw-r--r--. 1 cloud_user cloud_user   226 Feb 23 07:17 Pipfile
+-rw-r--r--. 1 cloud_user cloud_user 10219 Feb 23 07:17 Pipfile.lock
+drwxr-xr-x. 2 cloud_user cloud_user   124 Feb 23 07:17 static
+drwxr-xr-x. 2 cloud_user cloud_user   165 Feb 23 07:17 templates
+
+[cloud_user@ip-10-0-1-70 notes]$ cat config.py 
+import os
+
+db_host = os.environ.get('DB_HOST', default='localhost')
+db_name = os.environ.get('DB_NAME', default='notes')
+db_user = os.environ.get('DB_USERNAME', default='notes')
+db_password = os.environ.get('DB_PASSWORD', default='')
+db_port = os.environ.get('DB_PORT', default='5432')
+
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+SQLALCHEMY_DATABASE_URI = f"postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+{sqlalchemy is a tool for managing DB configuration, it requires migrations directory to store it's configurations data}
+
+
+{create a dockerignore file to ignore all the configuration files}
+
+[cloud_user@ip-10-0-1-70 notes]$ vi .dockerignore
+
+[cloud_user@ip-10-0-1-70 notes]$ cat .dockerignore
+.dockerignore
+Dockerfile
+.gitignore
+Pipfile.lock
+migrations/
+
+[cloud_user@ip-10-0-1-70 notes]$ vi Dockerfile 
+
+[cloud_user@ip-10-0-1-70 notes]$ cat Dockerfile
+FROM python:3
+ENV PYBASE /pybase
+ENV PYTHONUSERBASE $PYBASE
+ENV PATH $PYBASE/bin:$PATH
+RUN pip install pipenv                     {since it's a python container it'll come with pip}
+
+WORKDIR /tmp                               
+COPY Pipfile .
+RUN pipenv lock                            {this is the file pipenv uses to determine what dependencies to install}
+RUN PIP_USER=1 PIP_IGNORE_INSTALLED=1 pipenv install -d --system --ignore-pipfile 
+
+COPY . /app/notes
+WORKDIR /app/notes
+EXPOSE 80
+CMD ["flask", "run", "--port=80", "--host=0.0.0.0"]
+
+
+[cloud_user@ip-10-0-1-70 notes]$ docker build -t notesapp:0.1 .
+.
+.
+Successfully built 3ce487396ddf
+Successfully tagged notesapp:0.1
+
+docker images
+REPOSITORY   TAG           IMAGE ID       CREATED         SIZE
+notesapp     0.1           3ce487396ddf   9 seconds ago   999MB
+python       3             254d4a8a8f31   13 hours ago    885MB
+postgres     12.1-alpine   76780864f8de   13 months ago   154MB
+
+docker ps -a
+CONTAINER ID   IMAGE                  COMMAND                  CREATED          STATUS          PORTS                    NAMES
+908bece3bb5e   postgres:12.1-alpine   "docker-entrypoint.s…"   15 minutes ago   Up 15 minutes   0.0.0.0:5432->5432/tcp   notesdb
+
+docker network ls 
+NETWORK ID     NAME      DRIVER    SCOPE
+a760b4513fe3   bridge    bridge    local
+1d84ebe1b0f4   host      host      local
+6900bf351ba7   none      null      local
+f0ec0b49594d   notes     bridge    local
+
+docker run --rm -it --network notes -v /home/cloud_user/notes/migrations:/app/notes/migrations notesapp:0.1 bash 
+
+root@837fb3a1a92c:/app/notes# flask db init
+
+ls migrations/
+README	alembic.ini  env.py  script.py.mako  versions
+
+flask db migrate                                                       {this creates the files to be applied to the DB}
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.autogenerate.compare] Detected added table 'user'
+INFO  [alembic.autogenerate.compare] Detected added table 'note'
+  Generating /app/notes/migrations/versions/c3343596d6ff_.py ...  done
+
+
+flask db upgrade                                                        {to apply the files}
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> c3343596d6ff, empty message
+
+
+ docker run --rm -it --network notes -p 80:80 notesapp:0.1
+ * Serving Flask app "." (lazy loading)
+ * Environment: development
+ * Debug mode: on
+ * Running on http://0.0.0.0:80/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 125-544-625
+
+122.175.87.159 - - [23/Feb/2021 12:41:49] "GET / HTTP/1.1" 302 -                     {this is the log for actions performed in the build}
+122.175.87.159 - - [23/Feb/2021 12:41:50] "GET /notes HTTP/1.1" 302 -
+122.175.87.159 - - [23/Feb/2021 12:41:50] "GET /log_in HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:41:51] "GET /static/bulma.min.css HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:41:51] "GET /static/highlight.min.css HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:41:51] "GET /static/styles.css HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:41:51] "GET /static/highlight.min.js HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:41:51] "GET /static/app.js HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:41:53] "GET /favicon.ico HTTP/1.1" 404 -
+122.175.87.159 - - [23/Feb/2021 12:42:04] "POST /log_in HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:42:10] "GET /sign_up HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:42:17] "POST /sign_up HTTP/1.1" 302 -
+122.175.87.159 - - [23/Feb/2021 12:42:18] "GET /log_in HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:42:23] "POST /log_in HTTP/1.1" 302 -
+122.175.87.159 - - [23/Feb/2021 12:42:23] "GET / HTTP/1.1" 302 -
+122.175.87.159 - - [23/Feb/2021 12:42:24] "GET /notes HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:42:37] "GET /notes/new HTTP/1.1" 200 -
+122.175.87.159 - - [23/Feb/2021 12:42:51] "POST /notes/new HTTP/1.1" 302 -
+122.175.87.159 - - [23/Feb/2021 12:42:51] "GET /notes HTTP/1.1" 200 -
+
+
+
+vi .env                       {to disable the debugger we need to delete the fflask env line from the file}
+
+Now we rebuild the image as this is a new one
+
+docker build -t notesapp:0.2 .
+Sending build context to Docker daemon  261.6kB
+.
+.
+Successfully built 9010e3b6440b
+Successfully tagged notesapp:0.2
+
+docker images
+REPOSITORY   TAG           IMAGE ID       CREATED          SIZE
+notesapp     0.2           9010e3b6440b   4 seconds ago    999MB
+notesapp     0.1           3ce487396ddf   12 minutes ago   999MB
+python       3             254d4a8a8f31   13 hours ago     885MB
+postgres     12.1-alpine   76780864f8de   13 months ago    154MB
+
+[cloud_user@ip-10-0-1-70 notes]$ docker run --rm -it --network notes -p 80:80 notesapp:0.2
+ * Serving Flask app "."
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment. {This is a warning}
+   Use a production WSGI server instead.
+ * Debug mode: off
+ * Running on http://0.0.0.0:80/ (Press CTRL+C to quit)
+122.175.87.159 - - [23/Feb/2021 12:44:48] "GET /notes/1/edit HTTP/1.1" 200 -
+
+
+{The above warning states that it's not a production server. Now we need to upgrade it to use a production server instead of flask}
+{here we need to update it to use gunicorn instead of flask}
+
+We're installing the dependencies using pip. So we need to change the Pipenv file to install guncorn as a dependency
+
+cat Pipfile
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+python-dotenv = "*"
+
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+psycopg2-binary = "*"
+flask-migrate = "*"
+mistune = "*"
+
+
+docker run --rm -it -v /home/cloud_user/notes/Pipfile:/tmp/Pipfile  notesapp:0.2 bash 
+
+root@22768064a92c:/app/notes# cd /tmp/
+root@22768064a92c:/tmp# 
+root@22768064a92c:/tmp# 
+root@22768064a92c:/tmp# ls
+Pipfile				pip-ephem-wheel-cache-mtihebig	pip-req-tracker-m3nww9yg  pip-resolver-lbjoe9hf  pip-unpack-d8_klr10
+Pipfile.lock			pip-ephem-wheel-cache-n3chdr5a	pip-req-tracker-r0u_z458  pip-resolver-pe1319hn  pip-unpack-evxzf7i1
+pip-ephem-wheel-cache-0odorn_v	pip-ephem-wheel-cache-wovg0e2c	pip-req-tracker-uv3uo7m3  pip-resolver-sa83upof  pip-unpack-grap7vo2
+pip-ephem-wheel-cache-1ev_abka	pip-ephem-wheel-cache-wz1vsnfo	pip-req-tracker-v24d07l5  pip-resolver-snewy34r  pip-unpack-j9oneg9k
+pip-ephem-wheel-cache-2utjt1gv	pip-req-tracker-0xk95dhw	pip-req-tracker-ybbc761u  pip-resolver-stp4ow7p  pip-unpack-p
+
+root@22768064a92c:/tmp# pipenv install gunicorn 
+Installing gunicorn...
+Adding gunicorn to Pipfile's [packages]...
+✔ Installation Succeeded 
+Pipfile.lock (730408) out of date, updating to (436a86)...
+Locking [dev-packages] dependencies...
+Building requirements...
+Resolving dependencies...
+✔ Success! 
+Locking [packages] dependencies...
+Building requirements...
+Resolving dependencies...
+✔ Success! 
+Updated Pipfile.lock (436a86)!
+Installing dependencies from Pipfile.lock (436a86)...
+  🐍   ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉ 16/16 — 00:00:19
+To activate this project's virtualenv, run pipenv shell.
+Alternatively, run a command inside the virtualenv with pipenv run.
+
+
+root@22768064a92c:/tmp# exit
+
+cat Pipfile
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+python-dotenv = "*"
+
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+psycopg2-binary = "*"
+flask-migrate = "*"
+mistune = "*"
+gunicorn = "*"                                       {pip file has been upated as we logged into the container and installed the Pipfile and cos we mounted the local Pipfile to the one in the container}
+
+
+we need to modfiy the __init__.py file 
+from dotenv import load_dotenv, find_dotenv   {add these lines}
+load_dotenv(find_dotenv())
+
+
+Next we need to modfiy the Dockerfile and tell it to use gunicorn as the command instead of flask and change the workdir to /app
+WORKDIR /app
+EXPOSE 80
+CMD ["gunicorn", "-b 0.0.0.0:80", "notes:create_app()"]
+
+{here, we're telling it to use gunicorn command and use create_app in notes module }
+
+Build new image
+docker build -t notesapp:0.3 . 
+
+docker run -d --name notesapp --network notes -p 80:80 notesapp:0.3
+
+docker ps -a
+
+==> Building smaller docker images with multistage builds:
+
+cat Dockerfile 
+FROM python:3
+ENV PYBASE /pybase
+ENV PYTHONUSERBASE $PYBASE
+ENV PATH $PYBASE/bin:$PATH
+
+RUN pip install pipenv                                      {to installing dependencies in next steps}
+WORKDIR /tmp
+COPY Pipfile .
+RUN pipenv lock                                             {to build the list of dependencies that the application needs}
+RUN PIP_USER=1 PIP_IGNORE_INSTALLED=1 pipenv install -d --system --ignore-pipfile   {this will pull and place all the dependencies i the system folder which is /pybase }
+
+COPY . /app/notes
+WORKDIR /app/notes
+EXPOSE 80
+CMD [ "flask", "run", "--port=80", "--host=0.0.0.0" ]
+
+
+docker build -t notesapp:default .
+.
+.
+Successfully built 86a898ffa535
+Successfully tagged notesapp:default
+
+
+export showLayers='{{ range .RootFS.Layers }}{{ println . }}{{ end }}'     {variable to inspect an image and show the layers names}
+export showSize='{{ .Size }}'
+
+docker inspect -f "$showLayers" notesapp:default 
+sha256:7f03bfe4d6dc12155877f0d2e8b3429090bad1af7b005f75b7b3a874f386fd5a
+sha256:909e93c7174510acfb8f423fd685094540810e3288b99932ca2ab94d9fd99e1d
+sha256:4ef81dc52d996453d718fe990558f82275ee8c0270adbf36966743370692863d
+sha256:da654bc8bc80edf45dcec6dc7b2c71e1c283b1ffe49e81cd6289498ab9b58e5f
+sha256:10bf86ff9f6a0d24fa41491e74b8dcdeb8b23cc654a2a5e36573eac5e40ea25c
+sha256:e3d73f29c6746d2b19dbcc7bfa7b2464c4951807237658ad483faa014f9f9187
+sha256:302cf02dcc7ca4bf85e64602434fd70b1b3e62fa5ce4086c4b0759c2f6b7085d
+sha256:5b164865b353dc7fdc87e2f88985051cdaad76243ae3f64e3c3a7ea6f05f6447
+sha256:7d999a918ae93836011752bc817ed29cdc9b84071a4db6328bb4b02ae05a3f00
+sha256:cae41e8d3a3f5dd89f03a18c561c8003a4ba505e09ead94542422b772f7c1c13
+sha256:5ce59bb68d5d246c9e902614ff577c23e2ff55bb6f7d913f416dfb584cef5619
+sha256:2c16930a85b8e74dfab7603390bbeab47787d7af12ca39e71e5ee05d644a8841
+sha256:b864426c7ec9dcf46d97949fb55034e88c274a55654a070a775b35d13cb950c5
+sha256:71d682506e3a1ac7cb1325288906e599bb26990e9c29478227af0a246ee92bb2
+
+
+docker inspect -f "$showLayers" notesapp:default  | wc -l
+15
+
+docker inspect -f "$showSize" notesapp:default | numfmt --to=iec
+954M
+
+
+We need to reduce that size using multi stage builds. 
+
+FROM python:3 AS base
+ENV PYBASE /pybase
+ENV PYTHONUSERBASE $PYBASE
+ENV PATH $PYBASE/bin:$PATH
+
+FROM base AS builder
+RUN pip install pipenv
+WORKDIR /tmp
+COPY Pipfile .
+RUN pipenv lock
+RUN PIP_USER=1 PIP_IGNORE_INSTALLED=1 pipenv install -d --system --ignore-pipfile
+
+FROM base
+COPY --from=builder /pybase /pybase
+COPY . /app/notes
+WORKDIR /app/notes
+EXPOSE 80
+CMD [ "flask", "run", "--port=80", "--host=0.0.0.0" ]
+
+
+docker build -t notesapp:multstage .
+.
+.
+Successfully built 506a28faa4eb
+Successfully tagged notesapp:multstage
+
+
+docker inspect -f "$showLayers" notesapp:multstage  | wc -l
+12
+
+docker inspect -f "$showSize" notesapp:multstage | numfmt --to=iec
+867M
+
+
+
+==> Container Logging 
+
+Here, we're going to configure syslog (write logs into /var/log/messages) and json-logging (which will write logs to json format and we can see them using docker logs 'imagename')
+
+When we spin up a container it will by default use the syslog for logging unless specified by '--log-driver' flag during container startup
+
+Configuring syslog for UDP -
+
+vi /etc/rsyslog.conf    {this is the syslog conf file, here we need to uncomment the UDP section}
+
+
+# Provides UDP syslog reception
+$ModLoad imudp
+$UDPServerRun 514
+
+systemctl start rsyslog
+
+Now, syslog is running and we need to make some changes to docker sso that it uses syslog for logging 
+
+To do this we need to create a file called daemon.json in /etc/docker
+
+vi /etc/docker/daemon.json
+
+{
+ "log-driver": "syslog",
+ "logs-opts": {
+  "syslog-address": "udp://10.0.1.166:514"
+}
+
+}
+
+
+systemctl start docker 
+
+tail /var/log/messages
+
+docker container run -d --name syslog-logging httpd 
+
+docker ps 
+
+docker logs syslog-logging 
+{this will return error as we're using syslog for logging instead of the json}
+
+{now we can check the logs in /var/log/messages}
+
+
+now we're creating a container and specifying the log file to json file 
+
+docker container run -d --name json-logging --log-driver json-file httpd
+
+docker ps 
+
+docker logs json-logging
+
+{now we'll see the logs as we started the container by specifying json-file as the logs driver}
+
+
+==> Updating containers with WatchTower:
+
+Watch tower will automatically redeploy the containers when any changes are made to the image and pushed to docker hub
+
+create a dockerfile to create an image 
+
+vi Dockerfile
+FROM node
+RUN mkdir -p /var/node
+ADD content-express-demo-app/ /var/node/
+WORKDIR /var/node/
+RUN npm install 
+CMD ./bin/www
+
+Login to docker hub
+
+Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
+Username: rohitreddie
+Password: 
+WARNING! Your password will be stored unencrypted in /home/cloud_user/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+
+
+docker build -t rohitreddie/express -f Dockerfile .
+
+docker push rohitreddie/express
+
+docker run -d --name demoapp -p 80:3000 --restart always rohitreddie/express
+
+docker ps 
+CONTAINER ID   IMAGE                 COMMAND                  CREATED         STATUS         PORTS                  NAMES
+d7894116b020   rohitreddie/express   "docker-entrypoint.s…"   4 seconds ago   Up 2 seconds   0.0.0.0:80->3000/tcp   demoapp
+
+Now, we need to start the watchtower container to manage the pusehd images
+
+docker run -d --name watchtower --restart always -v /var/run/docker.sock:/var/run/docker.sock v2tec/watchtower -i 30
+                                                       {we're mounting docker socket so that watch tower can start/stop the container}
+
+docker ps 
+CONTAINER ID   IMAGE                 COMMAND                  CREATED         STATUS         PORTS                  NAMES
+2dde663ca6ee   v2tec/watchtower      "/watchtower -i 30"      7 seconds ago   Up 6 seconds                          watchtower
+d7894116b020   rohitreddie/express   "docker-entrypoint.s…"   2 minutes ago   Up 2 minutes   0.0.0.0:80->3000/tcp   demoapp
+
+Now we change the docker file and push the new image to docker hub and watchtower will automatically read the changes and restart the container with the new image 
+
+vi Dockerfile
+FROM node
+RUN mkdir -p /var/node
+RUN mkdir -p /var/test
+ADD content-express-demo-app/ /var/node/
+WORKDIR /var/node/
+RUN npm install 
+CMD ./bin/www
+
+
+docker build -t rohitreddie/express -f Dockerfile .
+
+docker push rohitreddie/express
+
+
+==> Adding MetaData and Lables:
+
+vi Dockerfile
+FROM node
+LABEL maintainer="rohit.reddie@gamil.com"
+ARG BUILD_VERSION
+ARG BUILD_DATE
+ARG APPLICATION_NAME
+
+LABEL org.example-schema.build-date=$BUILD_DATE
+LABEL org.example-schema.application=$APPLICATION_NAME
+LABEL org.example-schema.version=$BUILD_VERSION
+
+RUN mkdir -p /var/node 
+ADD weather-app/ /var/node/
+WORKDIR /var/node/
+RUN npm install 
+EXPOSE 3000
+CMD ./bin/www
+
+
+docker login
+Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
+Username: rohitreddie
+Password: 
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+
+docker build -t rohitreddie/weather-app --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') --build-arg APPLICATION_NAME=weather-app --build-arg BUILD_VERSION=v1.0 -f Dockerfile .
+
+docker images
+REPOSITORY                TAG       IMAGE ID       CREATED          SIZE
+rohitreddie/weather-app   latest    7eec35a9ee1f   20 seconds ago   959MB
+node                      latest    35ccd3263923   35 hours ago     936MB
+
+ docker inspect 7eec35a9ee1f
+ 
+ "Labels": {
+                "maintainer": "rohit.reddie@gamil.com",
+                "org.example-schema.application": "weather-app",
+                "org.example-schema.build-date": "2021-02-25T08:19:18Z",
+                "org.example-schema.version": "v1.0"
+
+docker push rohitreddie/weather-app
+
+Now,  shift to another docker server and run a container with the image we just pushed to docker hub. In this docker server watchtower has already been started
+
+docker run -d --name weather-app -p 80:3000 --restart always rohitreddie/weather-app
+Unable to find image 'rohitreddie/weather-app:latest' locally
+
+docker ps 
+
+CONTAINER ID   IMAGE                     COMMAND                  CREATED          STATUS          PORTS                  NAMES
+cfb175f9bd75   rohitreddie/weather-app   "docker-entrypoint.s…"   20 seconds ago   Up 14 seconds   0.0.0.0:80->3000/tcp   weather-app
+9aae32ed6606   v2tec/watchtower          "/watchtower -i 5"       2 hours ago      Up 2 hours                             watchtower
+
+
+Now we move back to the first docker server and modify the image and push it to docker hub
+
+We will move to the weather-app directory and change the code by checkingout from another branch 
+
+cd weather-app/
+
+git checkout v1.1
+Branch v1.1 set up to track remote branch v1.1 from origin.
+Switched to a new branch 'v1.1'
+
+git branch 
+  master
+* v1.1
+
+cd ../
+
+docker build -t rohitreddie/weather-app --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') --build-arg APPLICATION_NAME=weather-app --build-arg BUILD_VERSION=v1.1 -f Dockerfile .
+
+here, we're creating another image with the new code and changing the version to v1.1 for better identification
+
+docker images
+REPOSITORY                TAG       IMAGE ID       CREATED              SIZE
+rohitreddie/weather-app   latest    41b3e6a5b8dc   8 seconds ago        959MB
+<none>                    <none>    a92a5516efeb   About a minute ago   936MB
+rohitreddie/weather-app   <none>    7eec35a9ee1f   8 minutes ago        959MB
+node                      latest    35ccd3263923   35 hours ago         936MB
+
+
+docker inspect 41b3e6a5b8dc
+
+"Labels": {
+                "maintainer": "rohit.reddie@gamil.com",
+                "org.example-schema.application": "weather-app",
+                "org.example-schema.build-date": "2021-02-25T08:29:36Z",
+                "org.example-schema.version": "v1.1"
+
+
+Now, we push the image to dockerhub
+
+docker push rohitreddie/weather-app
+
+afa3a1871754: Pushed 
+6d1f077e420c: Pushed 
+92cd20b7c4c9: Pushed 
+8d56de323580: Layer already exists 
+b2ffcd948916: Layer already exists 
+24bf3da19193: Layer already exists 
+9b88fe065b35: Layer already exists 
+4ca605ea46de: Layer already exists 
+601f04850201: Layer already exists 
+846bd2f3b216: Layer already exists 
+2b3e667f5e92: Layer already exists 
+e891be0c59b2: Layer already exists 
+latest: digest: sha256:2f3a35cdbd36f04c0ba6904a9458db1d84a59e89fdb2e3bd80111aa1a998f962 size: 2843
+
+
+Now, if we shift to the other docker server we can see that the watchtowe has identified the change in image and has rebuild the container
+
+docker ps 
+CONTAINER ID   IMAGE                            COMMAND                  CREATED         STATUS         PORTS                  NAMES
+334fcc36e0d9   rohitreddie/weather-app:latest   "docker-entrypoint.s…"   6 seconds ago   Up 5 seconds   0.0.0.0:80->3000/tcp   weather-app
+9aae32ed6606   v2tec/watchtower                 "/watchtower -i 5"       2 hours ago     Up 2 hours                            watchtower
+
+we can inspect the container and check the change in metadata as well 
+
+"Labels": {
+                "maintainer": "rohit.reddie@gamil.com",
+                "org.example-schema.application": "weather-app",
+                "org.example-schema.build-date": "2021-02-25T08:29:36Z",
+                "org.example-schema.version": "v1.1"
+
+
+
+==> Load Balancing Containers
+
+ls 
+anaconda-ks.cfg  lb-challenge  swarm-token.txt
+
+cd lb-challenge/
+
+ls
+load-balancer  weather-app
+
+ls load-balancer/
+Dockerfile  nginx.conf
+
+ls weather-app/
+Dockerfile  src
+
+vi docker-compose.yml
+
+ls
+docker-compose.yml  load-balancer  weather-app
+
+cd load-balancer/
+
+ls
+Dockerfile  nginx.conf
+
+vi nginx.conf 
+
+cat nginx.conf
+events { worker_connections 1024; }
+
+http {
+ upstream localhost {
+    # Weather app config goes here.
+     server weather-app1:3000;
+     server weather-app2:3000;
+     server weather-app3:3000;
+ }
+ server {
+    # Server Config goes here.
+     listen 80;
+     server_name localhost;
+     location / {
+      proxxy_pass http://localhost;
+      procy_set_header Host $host;
+}  
+}
+}
+
+cat ../docker-compose.yml 
+version: '3.2'
+services:
+ weather-app1:
+  build: ./weather-app
+  tty: true
+  networks: 
+   - frontend
+ weather-app2:
+  build: ./weather-app
+  tty: true
+  networks: 
+   - frontend
+ weather-app3:
+  build: ./weather-app
+  tty: true
+  networks: 
+   - frontend
+ loadbalancer:
+  build: ./load-balancer
+  tty: true
+  ports:
+   - 80:80
+  networks:
+   - frontend
+
+networks:
+ frontend:
+
+docker-compose up --build -d
+
+docker ps 
+CONTAINER ID   IMAGE                       COMMAND                  CREATED         STATUS         PORTS                NAMES
+e079a423636e   lb-challenge_weather-app2   "docker-entrypoint.s…"   5 seconds ago   Up 3 seconds   3000/tcp             lb-challenge_weather-app2_1
+36f1e68dc5ba   lb-challenge_weather-app1   "docker-entrypoint.s…"   5 seconds ago   Up 3 seconds   3000/tcp             lb-challenge_weather-app1_1
+1c4139974617   lb-challenge_loadbalancer   "/docker-entrypoint.…"   5 seconds ago   Up 4 seconds   0.0.0.0:80->80/tcp   lb-challenge_loadbalancer_1
+91fecd8349bd   lb-challenge_weather-app3   "docker-entrypoint.s…"   5 seconds ago   Up 4 seconds   3000/tcp             lb-challenge_weather-app3_1
+
+ls
+anaconda-ks.cfg  lb-challenge  swarm-token.txt
+[root@ip-10-0-1-105 ~]# 
+[root@ip-10-0-1-105 ~]# 
+[root@ip-10-0-1-105 ~]# cat swarm-token.txt 
+Swarm initialized: current node (wxwn0qxqaaegq6padhl23cet8) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-2i39jqbytkwvge0ps29zt0z5dhugxys3ncah4jacdy8uoof9uq-721k3h6uizir8hzsih95admjw 10.0.1.105:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+
+docker service create --name nginx-app --publish published=8080,target=80 --replicas=1 nginx
+wspcn8mugv7lmmqomsh744555
+overall progress: 1 out of 1 tasks 
+1/1: running   [==================================================>] 
+verify: Service converged 
+
+docker ps 
+CONTAINER ID   IMAGE                       COMMAND                  CREATED          STATUS          PORTS                NAMES
+51efd5682950   nginx:latest                "/docker-entrypoint.…"   17 seconds ago   Up 15 seconds   80/tcp               nginx-app.1.6d9olbsufbrp8n59ge1et11ii
+e079a423636e   lb-challenge_weather-app2   "docker-entrypoint.s…"   3 minutes ago    Up 3 minutes    3000/tcp             lb-challenge_weather-app2_1
+36f1e68dc5ba   lb-challenge_weather-app1   "docker-entrypoint.s…"   3 minutes ago    Up 3 minutes    3000/tcp             lb-challenge_weather-app1_1
+1c4139974617   lb-challenge_loadbalancer   "/docker-entrypoint.…"   3 minutes ago    Up 3 minutes    0.0.0.0:80->80/tcp   lb-challenge_loadbalancer_1
+91fecd8349bd   lb-challenge_weather-app3   "docker-entrypoint.s…"   3 minutes ago    Up 3 minutes    3000/tcp             lb-challenge_weather-app3_1
+
+
+
+==> Build Services with Docker Compose
+
+Creating a docker-compose file to create a ghost blog with mysql container
+
+vi docker-compose.yml
+version: '3.0'
+services: 
+ ghost:
+  image: ghost:1-apline 
+  container_name: ghost-blog
+  restart: always
+  ports:
+   - 80:2368
+  environment:
+    database__client: mysql 
+    database__connection__host: mysql 
+    database__connection__user: root
+    database__connection__password: P4sSw0rd0!
+    database__connection__database: ghost
+  volumes:
+    - ghost-volume:/var/lib/ghost
+  depends_on:
+    - mysql
+ mysql:
+  image: mysql:5.7
+  container_name: ghost-db
+  restart: always
+  environment:
+   MYSQL_ROOT_PASSWORD: P4sSw0rd0!
+  volumes:
+   - mysql-volume:/var/lib/mysql 
+volumes:
+ ghost-volume:
+ mysql-volume:
+
+docker-compose up -d 
+Pulling ghost (ghost:1-alpine)...
+1-alpine: Pulling from library/ghost
+aad63a933944: Pull complete
+976f06839970: Pull complete
+c29b7930f4f9: Pull complete
+18316e90c190: Pull complete
+7aba797547c3: Pull complete
+ef529ab4d1ec: Pull complete
+96e7ecd230d9: Pull complete
+59586d3e4b30: Pull complete
+089ba083e7d4: Pull complete
+Digest: sha256:0a9957f8831db9fe6a87fe95217053939601fdcd1db047cb8b106f0ec4b7506b
+Status: Downloaded newer image for ghost:1-alpine
+Creating ghost-db ... done
+Creating ghost-blog ... done
+
+docker ps
+CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS          PORTS                  NAMES
+3e1683b8383a   ghost:1-alpine   "docker-entrypoint.s…"   24 seconds ago   Up 4 seconds    0.0.0.0:80->2368/tcp   ghost-blog
+587ee38de234   mysql:5.7        "docker-entrypoint.s…"   31 seconds ago   Up 24 seconds   3306/tcp, 33060/tcp    ghost-db
+
+
+==>Monitoring Docker with Prometheus:
+
+Creating a prometheus and cadvisor container to monitor docker
+
+
+vi prometheus.yml
+
+scrape_configs:
+ - job_name: cadvisor
+   scrape_interval: 5s
+   static_configs:
+    - targets:
+      - cadvisor:8080 
+
+vi docker-compose.yml
+
+version: '3'
+services: 
+ prometheus:
+  image: prom/prometheus:latest
+  container_name: prometheus
+  ports:
+   - 9090:9090
+  command:
+   - --config.file=/etc/prometheus/prometheus.yml
+  volumes:
+   - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  depends_on:
+   - cadvisor
+ cadvisor:
+  image: google/cadvisor:latest
+  container_name: cadvisor
+  ports:
+   - 8080:8080
+  volumes:
+   - /:/rootfs:ro
+   - /var/run:/var/run:rw
+   - /sys:/sys:ro
+   - /var/lib/docker:/var/lib/docker:ro
+
+
+docker-compose up -d
+
+docker ps 
+CONTAINER ID   IMAGE                    COMMAND                  CREATED          STATUS          PORTS                    NAMES
+2afbc73369c0   redis                    "docker-entrypoint.s…"   13 minutes ago   Up 13 minutes   0.0.0.0:6379->6379/tcp   redis
+2ccf74f43198   nginx                    "/docker-entrypoint.…"   14 minutes ago   Up 14 minutes   0.0.0.0:80->80/tcp       nginx
+d875796c5a00   prom/prometheus:latest   "/bin/prometheus --c…"   15 minutes ago   Up 15 minutes   0.0.0.0:9090->9090/tcp   prometheus
+1ab896317563   google/cadvisor:latest   "/usr/bin/cadvisor -…"   15 minutes ago   Up 15 minutes   0.0.0.0:8080->8080/tcp   cadvisor
+
+docker stats
+
+CONTAINER ID   NAME         CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O         PIDS
+2afbc73369c0   redis        0.45%     3.492MiB / 962.9MiB   0.36%     948B / 142B       655kB / 0B        5
+2ccf74f43198   nginx        0.00%     1.965MiB / 962.9MiB   0.20%     1.6kB / 1.33kB    1.3MB / 9.73kB    2
+d875796c5a00   prometheus   0.00%     33.95MiB / 962.9MiB   3.53%     3.73MB / 2.89MB   4.09MB / 7.68kB   8
+1ab896317563   cadvisor     0.96%     35.58MiB / 962.9MiB   3.70%     111kB / 3.67MB    90.1kB / 0B       12
+
+executing docker stats from a .sh file 
+
+vi ddocker-stats.sh
+#!/bin/bash 
+
+docker stats --format "table {{.Name}} {{.ID}} {{.MemUsage}} {{.CPUPerc}}"
+
+bash ddocker-stats.sh
+
+NAME CONTAINER ID MEM USAGE / LIMIT CPU %
+redis 2afbc73369c0 3.492MiB / 962.9MiB 0.53%
+nginx 2ccf74f43198 1.965MiB / 962.9MiB 0.00%
+prometheus d875796c5a00 36.15MiB / 962.9MiB 0.84%
+cadvisor 1ab896317563 35.6MiB / 962.9MiB 8.41%
+
+
+
+Using Grafana with Prometheus for alerting and monitoring:
+
+firewall-cmd --zone=public --add-port=9323/tcp
+{9323 is the port that prometheus will use to grab the docker metrics} 
+
+now we need the add the docker daemon file
+cat /etc/docker/daemon.json 
+{
+  "metrics-addr" : "0.0.0.0:9323",
+  "experimental" : true
+}
+
+now we need to restart docker for the daemon file to take effect
+systemctl restart docker 
+
+curl http://localhost:9323/metrics
+# HELP builder_builds_failed_total Number of failed image builds
+# TYPE builder_builds_failed_total counter
+builder_builds_failed_total{reason="build_canceled"} 0
+builder_builds_failed_total{reason="build_target_not_reachable_error"} 0
+builder_builds_failed_total{reason="command_not_supported_error"} 0
+
+Now we need to setup prometheus to go and grab the metrics:
+
+cat prometheus.yml 
+scrape_configs:
+- job_name: prometheus
+  scrape_interval: 5s
+  static_configs:
+  - targets:
+    - prometheus:9090
+    - node-exporter:9100
+    - pushgateway:9091 
+    - cadvisor:8080
+
+- job_name: docker 
+  scrape_interval: 5s
+  static_configs:
+  - targets: 
+    - 10.0.1.190:9323
+{above is the prometheus config file}
+
+
+cat docker-compose.yml 
+version: '3'
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - cadvisor
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - 8080:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+  pushgateway:
+   image: prom/pushgateway:latest
+   container_name: pushgateway
+   ports:
+    - 9091:9091
+  node-exporter:
+   image: prom/node-exporter:latest
+   container_name: node-exporter
+   ports:
+    - 9100:9100
+  grafana:
+   image: grafana/grafana:latest
+   container_name: grafana
+   ports:
+    - 3000:3000
+   environment:
+    - GF_SECURITY_ADMIN_PASSWORD=password
+   depends_on:
+    - prometheus
+    - cadvisor
+
+docker-compose up -d
+Pulling pushgateway (prom/pushgateway:latest)...
+latest: Pulling from prom/pushgateway
+.
+.
+Starting cadvisor      ... done
+Creating pushgateway   ... done
+Creating node-exporter ... done
+Starting prometheus    ... done
+Creating grafana       ... done
+
+docker ps 
+CONTAINER ID   IMAGE                       COMMAND                  CREATED          STATUS          PORTS                    NAMES
+fc9e82b79266   grafana/grafana:latest      "/run.sh"                15 seconds ago   Up 13 seconds   0.0.0.0:3000->3000/tcp   grafana
+651815d742af   prom/node-exporter:latest   "/bin/node_exporter"     17 seconds ago   Up 15 seconds   0.0.0.0:9100->9100/tcp   node-exporter
+9d6013cab903   prom/pushgateway:latest     "/bin/pushgateway"       17 seconds ago   Up 15 seconds   0.0.0.0:9091->9091/tcp   pushgateway
+13e2f31dd650   prom/prometheus:latest      "/bin/prometheus --c…"   3 hours ago      Up 14 seconds   0.0.0.0:9090->9090/tcp   prometheus
+7da52fa8e9f7   google/cadvisor:latest      "/usr/bin/cadvisor -…"   3 hours ago      Up 15 seconds   0.0.0.0:8080->8080/tcp   cadvisor
+cc498bf87ac6   nginx                       "/docker-entrypoint.…"   3 hours ago      Up 11 minutes   0.0.0.0:80->80/tcp       nginx
+7d3e8134fb11   redis                       "docker-entrypoint.s…"   3 hours ago      Up 11 minutes   0.0.0.0:6379->6379/tcp   redis
+
+firewall-cmd --add-port 9090/tcp {to open the grafana port}
+
+After this we need to login to grafan on the public ip and port 3000
+Then select add data source and give the name as prometheus
+Select type as prometheus 
+Under url give http://'publicip':9090
+Click save and test and it should display 'Data Source is working' if the configuration is right
+
+We can create dashboards and enable alerting and notifications in grafana
+
+
+
+==> Working with docker swarm:
+
+
+--> Setting up docker swarm-
+
+docker swarm init 
+
+In the master node enter above to list the docker join command
+
+docker swarm init
+Swarm initialized: current node (s4p340qlwgkuch2md3xldyhm2) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-2iuq845h9orzaxhq3mik1n79pzr0e40ogqkjd8ytounvieimce-axxmatzniqddiln0za4u6z99z 10.0.1.231:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+
+execute the join command on all the working nodes
+
+docker node ls 
+ID                            HOSTNAME                     STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+9kt68ngzfs2pifpcx6yu60gmc     ip-10-0-1-119.ec2.internal   Ready     Active                          20.10.3
+3wi8ooy3po1k4pubhqo7gn0rh     ip-10-0-1-166.ec2.internal   Ready     Active                          20.10.3
+s4p340qlwgkuch2md3xldyhm2 *   ip-10-0-1-231.ec2.internal   Ready     Active         Leader           20.10.3
+
+docker images
+REPOSITORY    TAG       IMAGE ID       CREATED          SIZE
+weather-app   latest    7f751083fafc   17 seconds ago   959MB
+node          latest    35ccd3263923   6 days ago       936MB
+
+here we need to create a service for the weather with 3 replicas
+
+docker service create --name weather-app --publish published=80,target=3000 --replicas=3 weather-app
+
+image weather-app:latest could not be accessed on a registry to record
+its digest. Each node will access weather-app:latest independently,
+possibly leading to different nodes running different
+versions of the image.
+
+z9v5444i523t4031m2ntfmqfc
+overall progress: 3 out of 3 tasks 
+1/3: running   [==================================================>] 
+2/3: running   [==================================================>] 
+3/3: running   [==================================================>] 
+verify: Service converged 
+
+docker service ls 
+ID             NAME          MODE         REPLICAS   IMAGE                PORTS
+z9v5444i523t   weather-app   replicated   3/3        weather-app:latest   *:80->3000/tcp
+
+
+{Now, we can access the weather app from all the nodes}
+
+
+-->Backing up and restoring docker swarm-
+
+docker service ls 
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+2482cvah2gt3   backup    replicated   1/1        httpd:latest   *:80->80/tcp
+
+{In the swarm master we need to generate the join tocken and execute it in the other 2 nodes to join them as worker nodes}
+{now we need to scale the service to 3 replicas as the worker nodes have now joined the swarm}
+
+docker service scale backup=3
+backup scaled to 3
+overall progress: 1 out of 3 tasks 
+overall progress: 3 out of 3 tasks 
+1/3: running   [==================================================>] 
+2/3: running   [==================================================>] 
+3/3: running   [==================================================>] 
+
+docker service ls 
+ID             NAME      MODE         REPLICAS   IMAGE          PORTS
+2482cvah2gt3   backup    replicated   3/3        httpd:latest   *:80->80/tcp
+
+docker service ps backup
+ID             NAME       IMAGE          NODE                         DESIRED STATE   CURRENT STATE                ERROR     PORTS
+r28qid7t3gei   backup.1   httpd:latest   ip-10-0-1-5.ec2.internal     Running         Running 11 minutes ago                 
+5rn69b82k7k0   backup.2   httpd:latest   ip-10-0-1-239.ec2.internal   Running         Running 55 seconds ago                 
+re4l4oz5vb6o   backup.3   httpd:latest   ip-10-0-1-220.ec2.internal   Running         Running about a minute ago             
+
+{here we're checking the state of the nodes in the service 'backup'}
+
+docker node ls 
+ID                            HOSTNAME                     STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+pz0j5n7u5qzha4u9cfnm3jf5k *   ip-10-0-1-5.ec2.internal     Ready     Active         Leader           20.10.3
+6z52410tg0talirpouwxxf2r8     ip-10-0-1-220.ec2.internal   Ready     Active                          20.10.3
+51zhvded4lpnus01qcmxg68ha     ip-10-0-1-239.ec2.internal   Ready     Active                          20.10.3
+
+To take the backup of the docker master and restore it in a backup server we need to stop the docker service first
+
+systemctl stop docker 
+Warning: Stopping docker.service, but it can still be activated by:
+  docker.socket
+
+tar cvzf swarm.tgz /var/lib/docker/swarm/                    {we're tar'ing the swarm directory and sending it to the backup node via scp}
+scp swarm.tgz cloud_user@3.215.184.159:/home/cloud_user/
+
+In the backup node we're copying the swarm directory to /var/lib/docker
+
+cd var/lib/docker/
+[root@ip-10-0-1-96 docker]# ls
+swarm
+
+ls swarm/
+certificates  docker-state.json  raft  state.json  worker
+
+cp -rf swarm/ /var/lib/docker
+
+systemctl restart docker
+
+docker swarm init --force-new-cluster
+
+Swarm initialized: current node (pz0j5n7u5qzha4u9cfnm3jf5k) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-56zxf87qqqy66gd28y78u8f213ucbu1l41i4fmo4rqin9epsnx-47ugo6pjxxaets7avglvfy93o 10.0.1.5:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+{to generate join token for this node as a master}
+
+
+In the worker nodes we need to leave them from the existing swarm to join the new node 
+
+docker swarm leave
+
+now we need the execute the swarm token generated above
+
+
+--> Scaling a docker swarm service-
+
+here we create a docker service with 2 master nodes and 3 replicas and then create a service and make sure it runs only on the worker nodes and not on the master. We can scale up/down the replicas and see that they increment/decrement is only happening amongst the worker nodes that we had specified.
+
+docker swarm init 
+Swarm initialized: current node (q9yted82t0x7c2uz2vnorhhbo) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-1mhspj90wlo4k85vt7v8wwrotfjgv96ykn6pepz3cvt6353te9-0448eejj5klwo4o099rvzysp9 10.0.1.208:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+{In master node 1 we execute this to get the join token for the worker nodes}
+
+
+docker swarm join-token manager
+To add a manager to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-1mhspj90wlo4k85vt7v8wwrotfjgv96ykn6pepz3cvt6353te9-0cvq6eqdp4n5vb6fluklxjbc8 10.0.1.208:2377
+
+{the above command will generate the join token for the secondary master}
+
+docker node ls 
+ID                            HOSTNAME                     STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+040fsu1cep5ibm8g4hy7gkxmp     ip-10-0-1-14.ec2.internal    Ready     Active                          20.10.3
+l7v681qp8rl7snv20157wywd3     ip-10-0-1-66.ec2.internal    Ready     Active         Reachable        20.10.3
+sbjs5vlib7i38ztd0knz4xuno     ip-10-0-1-94.ec2.internal    Ready     Active                          20.10.3
+3um3c7vf9f6yjhdvf1y8ez6xw     ip-10-0-1-177.ec2.internal   Ready     Active                          20.10.3
+q9yted82t0x7c2uz2vnorhhbo *   ip-10-0-1-208.ec2.internal   Ready     Active         Leader           20.10.3
+
+
+{now we need to make sure that the service should scale only amongst the worker nodes and not the master nodes, for that we need to set the availability of the master nodes to 'drain'}
+
+
+docker node update --availability drain q9yted82t0x7c2uz2vnorhhbo
+q9yted82t0x7c2uz2vnorhhbo
+
+docker node update --availability drain l7v681qp8rl7snv20157wywd3
+
+docker node ls 
+ID                            HOSTNAME                     STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+040fsu1cep5ibm8g4hy7gkxmp     ip-10-0-1-14.ec2.internal    Ready     Active                          20.10.3
+l7v681qp8rl7snv20157wywd3     ip-10-0-1-66.ec2.internal    Ready     Drain          Reachable        20.10.3
+sbjs5vlib7i38ztd0knz4xuno     ip-10-0-1-94.ec2.internal    Ready     Active                          20.10.3
+3um3c7vf9f6yjhdvf1y8ez6xw     ip-10-0-1-177.ec2.internal   Ready     Active                          20.10.3
+q9yted82t0x7c2uz2vnorhhbo *   ip-10-0-1-208.ec2.internal   Ready     Drain          Leader           20.10.3
+
+{now we need to create a httpd sservice with 3 replicas and scale it up to 5 then to 2 and observer that it is only being scaled amongst the worker nodes and not the masters}
+
+docker service create --name httpd -p 80:80 --replicas 3 httpd
+nvubodzffocuqhjknn0o9rodm
+overall progress: 3 out of 3 tasks 
+1/3: running   [==================================================>] 
+2/3: running   [==================================================>] 
+3/3: running   [==================================================>] 
+verify: Service converged 
+
+docker service ps httpd 
+ID             NAME      IMAGE          NODE                         DESIRED STATE   CURRENT STATE            ERROR     PORTS
+be70l9xpxlyb   httpd.1   httpd:latest   ip-10-0-1-177.ec2.internal   Running         Running 46 seconds ago             
+xzyxpjm6llxk   httpd.2   httpd:latest   ip-10-0-1-14.ec2.internal    Running         Running 45 seconds ago             
+yf1s7acwfw80   httpd.3   httpd:latest   ip-10-0-1-94.ec2.internal    Running         Running 33 seconds ago             
+
+docker service scale httpd=5
+httpd scaled to 5
+overall progress: 5 out of 5 tasks 
+1/5: running   [==================================================>] 
+2/5: running   [==================================================>] 
+3/5: running   [==================================================>] 
+4/5: running   [==================================================>] 
+5/5: running   [==================================================>] 
+verify: Waiting 5 seconds to verify that tasks are stable... 
+verify: Waiting 3 seconds to verify that tasks are stable... 
+verify: Service converged 
+
+docker service ps httpd 
+ID             NAME      IMAGE          NODE                         DESIRED STATE   CURRENT STATE                ERROR     PORTS
+be70l9xpxlyb   httpd.1   httpd:latest   ip-10-0-1-177.ec2.internal   Running         Running about a minute ago             
+xzyxpjm6llxk   httpd.2   httpd:latest   ip-10-0-1-14.ec2.internal    Running         Running about a minute ago             
+yf1s7acwfw80   httpd.3   httpd:latest   ip-10-0-1-94.ec2.internal    Running         Running about a minute ago             
+xn8kbbhzh3ic   httpd.4   httpd:latest   ip-10-0-1-14.ec2.internal    Running         Running 9 seconds ago                  
+up856qkhyayg   httpd.5   httpd:latest   ip-10-0-1-177.ec2.internal   Running         Running 10 seconds ago                 
+
+docker service scale httpd=2
+httpd scaled to 2
+overall progress: 2 out of 2 tasks 
+1/2: running   [==================================================>] 
+2/2: running   [==================================================>] 
+verify: Service converged 
+
+docker service ps httpd 
+ID             NAME      IMAGE          NODE                         DESIRED STATE   CURRENT STATE           ERROR     PORTS
+be70l9xpxlyb   httpd.1   httpd:latest   ip-10-0-1-177.ec2.internal   Running         Running 2 minutes ago             
+xzyxpjm6llxk   httpd.2   httpd:latest   ip-10-0-1-14.ec2.internal    Running         Running 2 minutes ago             
+
+
+
+==> Container Orchestration with Kubernetes:
+
+--> Install Kubernetes and create the cluster-
+
+adding the kubernetes repo in the server
+
+cat /etc/yum.repos.d/kubernetes.repo
+
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+exclude=kubelet kubeadm kubectl
+
+{add this to file to enable kunernetes repo}
+
+setenforce 0
+[root@ip-10-0-1-223 ~]# vi /etc/selinux/config
+{modify the selinux config file to set SELINUX to permissive}
+
+sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+{install dependencies for Kubernetes}
+
+systemctl enable --now kubelet
+{enable kubernetes now and on startup}
+
+kubeadm init --pod-network-cidr=10.244.0.0/16
+{run this on the node we decided as the controller to create the kubernetes cluster}
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 10.0.1.223:6443 --token 70thhr.fl5fk4x6zhta3l52 \   
+    --discovery-token-ca-cert-hash sha256:d1e917a74ad61a3d62c3f6069f74151c7c3728aada2a9f122f0a7196c7772bb3  
+
+{excute the above command on all the other worker nodes to join them to the cluster}
+
+
+docker ps -a
+CONTAINER ID        IMAGE                                                                                           COMMAND                  CREATED             STATUS              PORTS               NAMES
+07a9bd71e41e        k8s.gcr.io/kube-proxy@sha256:454050a55141f5f77ef30a6d2aa8ee41c6dc03e307f4f2558498099493087cc4   "/usr/local/bin/ku..."   51 seconds ago      Up 50 seconds                           k8s_kube-proxy_kube-proxy-xqs9d_kube-system_f1cdd8a2-623c-4f83-97bc-ae3b58240ee2_0
+786699541e40        k8s.gcr.io/pause:3.2                                                                            "/pause"                 54 seconds ago      Up 54 seconds                           k8s_POD_kube-proxy-xqs9d_kube-system_f1cdd8a2-623c-4f83-97bc-ae3b58240ee2_0
+
+{this shows that some of the kubernetes containers are running on docker}
+
+
+{In the controller node}
+kubectl get nodes
+NAME                         STATUS     ROLES                  AGE     VERSION
+ip-10-0-1-100.ec2.internal   NotReady   <none>                 108s    v1.20.4
+ip-10-0-1-223.ec2.internal   NotReady   control-plane,master   6m28s   v1.20.4
+ip-10-0-1-253.ec2.internal   NotReady   <none>                 104s    v1.20.4
+
+
+{The last thing we need to start using pods in the cluster is to create a network overlay, for this we use flannel }
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+podsecuritypolicy.policy/psp.flannel.unprivileged created
+clusterrole.rbac.authorization.k8s.io/flannel created
+clusterrolebinding.rbac.authorization.k8s.io/flannel created
+serviceaccount/flannel created
+configmap/kube-flannel-cfg created
+daemonset.apps/kube-flannel-ds created
+
+
+{if we check the docker containers on the worker nodes we can see that they also have the container flannel runing}
+docker ps -a
+CONTAINER ID        IMAGE                                                                                            COMMAND                  CREATED             STATUS                      PORTS               NAMES
+1febc88ddb82        k8s.gcr.io/coredns@sha256:73ca82b4ce829766d4f1f10947c3a338888f876fbed0540dc849c89ff256e90c       "/coredns -conf /e..."   2 seconds ago       Up 1 second                                     k8s_coredns_coredns-74ff55c5b-7q754_kube-system_0076c574-81a2-4169-8a7c-9df4d552f648_0
+5162c5f1ba9d        k8s.gcr.io/pause:3.2                                                                             "/pause"                 4 seconds ago       Up 3 seconds                                    k8s_POD_coredns-74ff55c5b-7q754_kube-system_0076c574-81a2-4169-8a7c-9df4d552f648_0
+663307964bff        dee1cac4dd20                                                                                     "/opt/bin/flanneld..."   15 seconds ago      Up 15 seconds                                   k8s_kube-flannel_kube-flannel-ds-npxwh_kube-system_4ea8817a-efdc-488b-9183-7b03964e65ec_0
+e47458cb2266        quay.io/coreos/flannel@sha256:cb78302df116443b4437b4a0aa4e48945728deb5982ba42de597297985ed9d19   "cp -f /etc/kube-f..."   16 seconds ago      Exited (0) 16 seconds ago                       k8s_install-cni_kube-flannel-ds-npxwh_kube-system_4ea8817a-efdc-488b-9183-7b03964e65ec_0
+71d7315a3984        k8s.gcr.io/pause:3.2                                                                             "/pause"                 19 seconds ago      Up 18 seconds                                   k8s_POD_kube-flannel-ds-npxwh_kube-system_4ea8817a-efdc-488b-9183-7b03964e65ec_0
+07a9bd71e41e        k8s.gcr.io/kube-proxy@sha256:454050a55141f5f77ef30a6d2aa8ee41c6dc03e307f4f2558498099493087cc4    "/usr/local/bin/ku..."   5 minutes ago       Up 5 minutes                                    k8s_kube-proxy_kube-proxy-xqs9d_kube-system_f1cdd8a2-623c-4f83-97bc-ae3b58240ee2_0
+786699541e40        k8s.gcr.io/pause:3.2                                                                             "/pause"                 5 minutes ago       Up 5 minutes                                    k8s_POD_kube-proxy-xqs9d_kube-system_f1cdd8a2-623c-4f83-97bc-ae3b58240ee2_0
+
+{now we have the cluster setup, worker nodes joined and networking installed we can test the cluster out using a pod and a service}
+
+creating a pod-
+
+vi pod.yml
+apiVersion: v1
+kind: pod 
+metadata:
+ name: nginx-pod-demo
+ labels:
+   app: nginx-demo                       {we'll use this label while creating a service to join all the respective pods}
+spec:
+ containers:
+ - image: nginx:latest
+   name: nginx-demo
+   ports:
+   - containerPort: 80
+   imagePullPolicy: Always
+
+
+kubectl apply -f pod.yml
+pod/nginx-pod-demo created
+
+kubectl get pods
+NAME             READY   STATUS    RESTARTS   AGE
+nginx-pod-demo   1/1     Running   0          13s
+
+Now we need to create a service to expose the pods-
+
+cat service.yml
+apiVersion: v1
+kind: Service 
+metadata:
+ name: nginx-service-demo
+spec:
+ selector: 
+   app: nginx-demo                                  {this has to be specified as label while creating the pods}
+ ports:
+ - protocol: TCP
+   port: 80
+   targetPort: 80
+ type: NodePort
+
+kubectl apply -f service.yml 
+service/nginx-service-demo created
+
+kubectl get services
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes           ClusterIP   10.96.0.1        <none>        443/TCP        24m
+nginx-service-demo   NodePort    10.103.154.175   <none>        80:32097/TCP   45s
+                                                            {32097 is the port that the nginx service is listening on the individual node}
+
+
+--> Scaling Pods with Kubernetes-
+
+kubeadm init --pod-network-cidr=10.244.0.0/16 --kubernetes-version=v1.11.3
+Your Kubernetes master has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+You can now join any number of machines by running the following on each node
+as root:
+
+  kubeadm join 10.0.1.132:6443 --token neci5v.wpvnhq9i6joqrehv --discovery-token-ca-cert-hash sha256:e832101e55a3bee7bb12fdb3a926874b95ced57462d07a3cf950cd0e303cfa15
+
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.9.1/Documentation/kube-flannel.yml
+
+kubectl get nodes
+NAME                         STATUS    ROLES     AGE       VERSION
+ip-10-0-1-132.ec2.internal   Ready     master    3m        v1.11.3
+ip-10-0-1-203.ec2.internal   Ready     <none>    2m        v1.11.3
+ip-10-0-1-30.ec2.internal    Ready     <none>    3m        v1.11.3
+
+kubectl get pods --all-namespaces
+NAMESPACE     NAME                                                 READY     STATUS    RESTARTS   AGE
+kube-system   coredns-78fcdf6894-2k7ml                             1/1       Running   0          4m
+kube-system   coredns-78fcdf6894-jrfcs                             1/1       Running   0          4m
+kube-system   etcd-ip-10-0-1-132.ec2.internal                      1/1       Running   0          3m
+kube-system   kube-apiserver-ip-10-0-1-132.ec2.internal            1/1       Running   0          2m
+kube-system   kube-controller-manager-ip-10-0-1-132.ec2.internal   1/1       Running   0          3m
+kube-system   kube-flannel-ds-2rw58                                1/1       Running   0          55s
+kube-system   kube-flannel-ds-9c9r9                                1/1       Running   0          55s
+kube-system   kube-flannel-ds-wh99x                                1/1       Running   0          55s
+kube-system   kube-proxy-9gq4s                                     1/1       Running   0          2m
+kube-system   kube-proxy-dvch7                                     1/1       Running   0          4m
+kube-system   kube-proxy-fw2xk                                     1/1       Running   0          3m
+kube-system   kube-scheduler-ip-10-0-1-132.ec2.internal            1/1       Running   0          3m
+
+vi deployment.yml
+[root@ip-10-0-1-132 ~]# cat deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpd-deployment
+  labels: 
+   app: httpd
+spec:
+ replicas: 3
+ selector:
+   matchLabels: 
+     app: httpd
+ template:
+   metadata: 
+     labels:
+        app: httpd
+   spec:
+      containers:
+      - name: httpd
+        image: httpd:latest
+        ports:
+        - containerPort: 80   
+
+kubectl create -f deployment.yml 
+deployment.apps/httpd-deployment created
+
+kubectl get pods
+NAME                                READY     STATUS    RESTARTS   AGE
+httpd-deployment-6c4f7b6546-9dqg8   1/1       Running   0          9s
+httpd-deployment-6c4f7b6546-nj68k   1/1       Running   0          9s
+httpd-deployment-6c4f7b6546-xz2px   1/1       Running   0          9s
+
+vi service.yml
+
+cat service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-deployment
+spec: 
+  selector: 
+    app: httpd
+  ports: 
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: NodePort
+
+kubectl get services
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+kubernetes           ClusterIP   10.96.0.1     <none>        443/TCP        15m
+service-deployment   NodePort    10.97.53.94   <none>        80:32279/TCP   32s
+
+kubectl apply -f deployment.yml
+Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply
+deployment.apps/httpd-deployment configured
+[root@ip-10-0-1-132 ~]# 
+[root@ip-10-0-1-132 ~]# kubectl get pods
+NAME                                READY     STATUS    RESTARTS   AGE
+httpd-deployment-6c4f7b6546-22dz4   1/1       Running   0          13s
+httpd-deployment-6c4f7b6546-9dqg8   1/1       Running   0          4m
+httpd-deployment-6c4f7b6546-nj68k   1/1       Running   0          4m
+httpd-deployment-6c4f7b6546-xz2px   1/1       Running   0          4m
+httpd-deployment-6c4f7b6546-zkr98   1/1       Running   0          13s
+
+
+--> Creating a Helm Chart-
+
+curl https://raw.githubusercontent.com/helm/helm/master/scripts/get > /tmp/get_helm.sh
+{this will consist of the bash script to run helm}
+
+chmod 700 /tmp/get_helm.sh
+
+DESIRED_VERSION=v2.8.2 /tmp/get_helm.sh
+Downloading https://get.helm.sh/helm-v2.8.2-linux-amd64.tar.gz
+Preparing to install helm and tiller into /usr/local/bin
+helm installed into /usr/local/bin/helm
+info: tiller binary was not found in this release; skipping tiller installation
+Run 'helm init' to configure helm.
+
+helm init --stable-repo-url https://charts.helm.sh/stable 
+Creating /root/.helm 
+Creating /root/.helm/repository 
+Creating /root/.helm/repository/cache 
+Creating /root/.helm/repository/local 
+Creating /root/.helm/plugins 
+Creating /root/.helm/starters 
+Creating /root/.helm/cache/archive 
+Creating /root/.helm/repository/repositories.yaml 
+Adding stable repo with URL: https://charts.helm.sh/stable 
+Adding local repo with URL: http://127.0.0.1:8879/charts 
+$HELM_HOME has been configured at /root/.helm.
+
+Tiller (the Helm server-side component) has been installed into your Kubernetes Cluster.
+
+Please note: by default, Tiller is deployed with an insecure 'allow unauthenticated users' policy.
+For more information on securing your installation see: https://docs.helm.sh/using_helm/#securing-your-helm-installation
+Happy Helming!
+
+
+helm init --wait 
+$HELM_HOME has been configured at /root/.helm.
+Warning: Tiller is already installed in the cluster.
+(Use --client-only to suppress this message, or --upgrade to upgrade Tiller to the current version.)
+Happy Helming!
+
+kubectl --namespace=kube-system create clusterrolebinding add-on-cluster-admin --clusterrole=cluster-admin --serviceaccount=kube-system:default
+clusterrolebinding.rbac.authorization.k8s.io/add-on-cluster-admin created
+
+mkdir charts
+
+cd charts
+
+[root@ip-10-0-1-158 charts]# helm create httpd 
+Creating httpd
+[root@ip-10-0-1-158 charts]# ls
+httpd
+[root@ip-10-0-1-158 charts]# ls httpd/
+charts  Chart.yaml  templates  values.yaml
+[root@ip-10-0-1-158 charts]# cd httpd/
+[root@ip-10-0-1-158 httpd]# ls
+charts  Chart.yaml  templates  values.yaml
+[root@ip-10-0-1-158 httpd]# ls charts/
+[root@ip-10-0-1-158 httpd]# ls templates/
+deployment.yaml  _helpers.tpl  ingress.yaml  NOTES.txt  service.yaml
+[root@ip-10-0-1-158 httpd]# vi values.yaml 
+[root@ip-10-0-1-158 httpd]# cd ../
+[root@ip-10-0-1-158 charts]# ls
+httpd
+
+helm install --name  my-httpd ./httpd/
+NAME:   my-httpd
+LAST DEPLOYED: Tue Mar  2 03:06:22 2021
+NAMESPACE: default
+STATUS: DEPLOYED
+
+RESOURCES:
+==> v1/Service
+NAME      TYPE      CLUSTER-IP     EXTERNAL-IP  PORT(S)       AGE
+my-httpd  NodePort  10.103.130.36  <none>       80:31762/TCP  0s
+
+==> v1beta2/Deployment
+NAME      DESIRED  CURRENT  UP-TO-DATE  AVAILABLE  AGE
+my-httpd  1        1        1           0          0s
+
+==> v1/Pod(related)
+NAME                      READY  STATUS             RESTARTS  AGE
+my-httpd-c4969594f-pv249  0/1    ContainerCreating  0         0s
+
+
+NOTES:
+1. Get the application URL by running these commands:
+  export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services my-httpd)
+  export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+
+[root@ip-10-0-1-158 charts]# export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services my-httpd)
+[root@ip-10-0-1-158 charts]#   export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+[root@ip-10-0-1-158 charts]#   echo http://$NODE_IP:$NODE_PORT
+http://10.0.1.158:31762
+
+kubectl get pods
+NAME                       READY     STATUS             RESTARTS   AGE
+my-httpd-c4969594f-pv249   0/1       InvalidImageName   0          38s
+
+[root@ip-10-0-1-158 charts]# kubectl get services
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP        7m
+my-httpd     NodePort    10.103.130.36   <none>        80:31762/TCP   45s
+
+cat httpd/values.yaml 
+# Default values for httpd.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: httpd:latest
+  tag: stable
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

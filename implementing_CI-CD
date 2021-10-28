@@ -1,0 +1,1960 @@
+SCM:
+
+==> Main steps to know in git-
+
+Cloning       :- Pulling down a copy of source code from remote repo 
+Adding        :- After a change is made we need to add that change in order to stage it for the next commit  
+Commiting     :- This takes the change that we made and adds it to the source control repository
+Pushing       :- This will take the local commits made in the local repo and push it to the remote server where others and see and interact
+Branching     :- To maintain a seperate branch for a feature being worked on
+Merging       :- Once the dev is done for the new feature, it will be merged into the main branch 
+Pull Requests :- This is implemented by github to allow review prior to a merge. Once we add source code changes to a branch we can subit a request for a branch to be merged and it can reviewed before being merged
+
+
+==> Installing GIT:
+
+https://git-scm.com/download/linux
+
+git config --global user.name "Rohit"
+git config --global user.email rohit.gaddam@spoors.in
+
+{^ configuring email address and username globally in git. This has to be done only once for each install}
+
+Setup git to authenticate with the remote repo on github.com-
+
+cat .ssh/id_rsa.pub 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDNFf+O0clXruLxFY97BmB3NeHEnOKyWGKVt95e9LAMF1Uw1YtfXt/At5QvpKxcp5xre+2OaSxHRC9lqHSYDNJ2/2k4e+okIGZY4j+224I3e3EmKgofneciVYT9ibbRhkrr8BFqUe0yrQ6qCbHUPgYHEkFNpAWCUPaAnvv83AkQ6Ia57OObL1Kiop+8yhCVxHf77qL+hWtHFDdsqQOxGUld6SgR134tPFpJG2xoSYpnFjum5Ik7jeywRJ/LuB1oVjk6JTi00WMURHwjYeBE2LLzydnYBBGOk7/U+qHUm6Q/H1vuZ49tlpBReLreGPmfrbOm9K9uGTVT6vVNZoJX08L7 spoors@spoors-Lenovo-ideapad-310-15ISK
+
+add the above key to github.com under settings and ssh keys
+
+
+
+==> Creating github forks:
+
+By creating a fork we are creating an own personal copy of the entire source code and the change history 
+
+Just click on fork after logging in the repo, it will clone it to our own repo if we have the permission
+
+==> Making changes in git:
+
+git clone 'repo url' 
+git clone https://github.com/gogate1/cicd-pipeline-train-schedule-git.git
+{this will get the source code from the repo to our local}
+{this will make a local copy of the latest version of all files known as "working tree"}
+
+git init
+{to initialise a new repo locally}
+
+git status
+{this will provide info about the current state of the local repository
+> If there are any changes that are not yet staged for commit
+> If there are any changes staged but not yet commited
+> The branch we are currently in}
+
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
+
+
+Steps to push a change to the remote server(github.com)
+1. Stage the changes for commit
+here, we're telling git which changes and which files we want to be part for the next commit
+
+git add 'name of the file we want to add'   {to stage a specific file we've changed}
+git add . (or) git add -A {if there are changes made to multiple files then we can stage all the files for commit}
+[***here we can use git status to see what files have been changed and if they are staged or commited***]
+
+2. Once we have staged the files for commit, we're ready to commit them
+
+git commit -m "message for the commit"
+
+{here, we're only adding the changes to our local copy of the git repo. It's not pushing the changes to the remote repo in github where others can see and interact with them}
+{the commit will only include the changes that were staged using the git add command previously}
+
+3. Once the changes have been commited and they are ready to be pushed to the remote repo, we can do that using the git push command
+
+git push 
+
+{by default git push will push the changes to the remote repository associated with the current local branch. If the local branch is cloned from a remote repo then this relationship is already established so we can directly use git push. If not, we need to specify which remote repo and which branch we want to push}
+
+git push -u <remote name, usually origin> <branch name>
+
+
+ex:-
+spoors@ggmu:~$ git clone https://github.com/gogate1/cicd-pipeline-train-schedule-git.git
+Cloning into 'cicd-pipeline-train-schedule-git'...
+remote: Enumerating objects: 31, done.
+remote: Total 31 (delta 0), reused 0 (delta 0), pack-reused 31
+Unpacking objects: 100% (31/31), 13.16 KiB | 74.00 KiB/s, done.
+
+cd cicd-pipeline-train-schedule-git/
+
+git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
+
+vi views/index.jade  {we edited this file}
+
+git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   views/index.jade
+
+no changes added to commit (use "git add" and/or "git commit -a")
+ 
+
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git add .
+
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   views/index.jade
+
+
+git commit -m "changed header text"
+[master 1373b88] changed header text
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git status
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+
+{origin referes to the remote repo from where this code actually came from(was pulled from)} 
+
+git push
+Username for 'https://github.com': gogate1
+Password for 'https://gogate1@github.com': 
+Enumerating objects: 7, done.
+Counting objects: 100% (7/7), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (4/4), 417 bytes | 208.00 KiB/s, done.
+Total 4 (delta 2), reused 0 (delta 0)
+remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
+To https://github.com/gogate1/cicd-pipeline-train-schedule-git.git
+   2660b73..1373b88  master -> master
+
+git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
+
+
+==> Branches and Tags:
+
+Branches: Git branches are different versions of code that maintain different changes simultaneously
+
+git checkout <branch>   {this will put the contents of the branch in our working tree. When we commit the commit will be added to whichever branch we have checkedout } (this means we will move to the mentioned branch and can perfrom add, commit etc operations over there)
+
+git checkout -b <branchname> {this will create a new branch and checkout simultaneously}
+
+
+Tags: 
+Tags are pointers to a commit. In general use case, we can tag a commit with the version of the code so that the commits can be tracked back based on version in the future for reference
+
+ex:-
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git branch 
+* master
+
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git checkout -b newBranch
+Switched to a new branch 'newBranch'
+{create a branch called new branch and checkout it simultaneously}
+
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git branch 
+  master
+* newBranch
+
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git checkout master
+Switched to branch 'master'
+Your branch is up to date with 'origin/master'.
+{this will move us back to master}
+
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git tag mytag
+{this will create a tag to the latest commit and we can referrence the commit with that tag}
+
+spoors@ggmu:~/cicd-pipeline-train-schedule-git$ git tag
+mytag
+
+
+==> Pull Requests:
+
+Usually many teams work on their independent branches w.r.t features being worked on. But the code needs to be merged with the main branch very often. 
+The merging of branched locally can be handled by git but it also can be achieved using a pull request.
+When a pull request is made by a dev to merge a set of changes to a specific branch, other team members will have the access to review and approve/deny the changes 
+
+
+
+BUILD AUTOMATION:
+
+This includes tasks that need to be executed in order to process and prepare the source code for deployment 
+> Compiling
+> Dependency Management
+> Executing Automated Tests
+> Packaging the app for deployment 
+
+
+Gradle:-
+
+Installing gradle-
+
+https://gradle.org/install/
+
+wget -O gradle-4.7-bin.zip https://services.gradle.org/distributions/gradle-4.7-bin.zip
+
+mkdir /opt/gradle
+
+unzip -d /opt/gradle ~./gradle-4.7-bin.zip
+
+we can either do this or we can use gradle wrapper
+
+gradle wrapper can be added to the source code in git repo. This will place a script in the root directory of the project called gradlew by invoking which will do an automatic install of a specific version of gradle 
+
+mkdir my-project
+cd my-project
+gradle wrapper   {this will get gradlew and gradlew.bat files which are the scripts to be run}
+./gradlew build   
+
+{this command will work even if there isn't a gradle installation on the server. All it needs is a jdk 7 or later}
+
+
+==> Gradle Basics:
+
+Gradle build is defined in a groovy script called build.gradle. This file is located in the root directory of the project
+
+gradle init {to initialize a new project}
+
+A gradle build consists of tasks that we call from a command line 
+
+ex:
+./gradlew task1 task2
+
+the above command will run a task named task1 and a task named task2
+
+** build.gradle file controls what tasks are available for the project
+
+We can define our custom tasks in build.gradle file
+ex:
+task task1{
+println 'hello world!'
+}
+
+Most of the tasks we use will either be build into gradle or will be available as plugins
+
+Task Dependencies: In gradle the tasks can be configured as dependencies for other tasks. So we can control what tasks are being run and the order of their execution by specifying the task dependencies which needs to be run for a particular build command.
+
+** The dependenciy relationships in tasks can be defined in the build.gradle file
+ex:
+task1.dependsOn task2
+
+** Plugins can be included in build.gradle as below,
+plugins{
+id"<plugin id>" version"<plugin version>" 
+}
+
+https://plugins.gradle.org/
+
+implementing a gradle build-
+
+gradle init {this will initialise gradle and we'll get the gradle.build, gradlew etc files}
+
+Now we can edit build.gradle 
+
+vi build.gradle
+
+task sayHello << {
+println "hello world!"
+}
+
+task helloAgain << {
+
+println "second task"
+
+}
+
+
+gradlew sayHellow   {this will run the specified task}
+
+hello world!
+
+
+gradlew helloAgain
+
+second task
+
+gradlew sayHellow helloAgain   {this will run both the tasks}
+
+
+vi build.gradle
+
+task sayHello << {
+println "hello world!"
+}
+
+task helloAgain << {
+
+println "second task"
+
+}
+
+sayHellow.dependsOn helloAgain
+
+{now we have set a dependson condition amongst the tasks}
+
+gradlew sayHellow {this will run both as there is a dependency}
+
+
+vi build.gradle
+
+plugins {
+id 'com.moowork.node' version '1.2.0'
+}
+
+task sayHello << {
+println "hello world!"
+}
+
+task helloAgain << {
+
+println "second task"
+
+}
+
+sayHellow.dependsOn helloAgain
+
+{here, we've added a plugin as well}
+
+gradlew nodeSetup  {this is one of the tasks that is included in the plugin we mentioned so it will execute the task from the plugin}
+
+
+
+==> Automated Testing:
+
+Automated test are usually a part of the build process and are executed using build tools like gradle
+
+unit test, integration tests, smoke/sanity test
+
+Generally automated tests are run as a gradle task that gets executed as a part of a build process
+
+ex:
+We will have a task called 'test' and a task called 'build' defined in the gradle.build file and a condition "build.dependsOn test"
+We can run them by executing gradlew build
+This will run the test task first and only if that is completed successfully, it will run the build task
+
+
+LAB: Build automation in grade
+
+Setup the git --global config and the ssh key in github
+[root@ip-10-0-1-67 ~]# git config --global user.name "rohit reddy"
+[root@ip-10-0-1-67 ~]# git config --global user.email rohit.reddie@gmail.com
+
+[root@ip-10-0-1-67 ~]# ssh-keygen
+
+[root@ip-10-0-1-67 ~]# git clone https://github.com/gogate1/cicd-pipeline-train-schedule-gradle.git
+Cloning into 'cicd-pipeline-train-schedule-gradle'...
+remote: Enumerating objects: 63, done.
+remote: Total 63 (delta 0), reused 0 (delta 0), pack-reused 63
+Unpacking objects: 100% (63/63), done.
+
+[root@ip-10-0-1-67 ~]# ls
+anaconda-ks.cfg  cicd-pipeline-train-schedule-gradle
+
+[root@ip-10-0-1-67 ~]# cd cicd-pipeline-train-schedule-gradle/
+
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ls -la
+total 188
+drwxr-xr-x. 10 root root    236 Mar  9 05:25 .
+dr-xr-x---.  5 root root    236 Mar  9 05:25 ..
+-rw-r--r--.  1 root root   1079 Mar  9 05:25 app.js
+drwxr-xr-x.  2 root root     17 Mar  9 05:25 bin
+drwxr-xr-x.  2 root root     25 Mar  9 05:25 data
+drwxr-xr-x.  8 root root    163 Mar  9 05:25 .git
+-rw-r--r--.  1 root root     20 Mar  9 05:25 .gitignore
+drwxr-xr-x.  3 root root     21 Mar  9 05:25 gradle
+-rwxr-xr-x.  1 root root   5296 Mar  9 05:25 gradlew
+-rw-r--r--.  1 root root   2260 Mar  9 05:25 gradlew.bat
+-rw-r--r--.  1 root root    482 Mar  9 05:25 package.json
+-rw-r--r--.  1 root root 160017 Mar  9 05:25 package-lock.json
+drwxr-xr-x.  4 root root     44 Mar  9 05:25 public
+-rw-r--r--.  1 root root    585 Mar  9 05:25 README.md
+drwxr-xr-x.  2 root root     39 Mar  9 05:25 routes
+drwxr-xr-x.  2 root root     27 Mar  9 05:25 test
+drwxr-xr-x.  2 root root     61 Mar  9 05:25 views
+
+{here we aleady have gradle files as gradle wrapper was included as part of the source code in the SCM }
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ./gradlew build
+Downloading https://services.gradle.org/distributions/gradle-4.6-bin.zip
+......................................................................
+Unzipping /root/.gradle/wrapper/dists/gradle-4.6-bin/4jp4stjndanmxuerzfseyb6wo/gradle-4.6-bin.zip to /root/.gradle/wrapper/dists/gradle-4.6-bin/4jp4stjndanmxuerzfseyb6wo
+Set executable permissions for: /root/.gradle/wrapper/dists/gradle-4.6-bin/4jp4stjndanmxuerzfseyb6wo/gradle-4.6/bin/gradle
+Starting a Gradle Daemon (subsequent builds will be faster)
+
+> Task :buildEnvironment 
+
+------------------------------------------------------------
+Root project
+------------------------------------------------------------
+
+classpath
+No dependencies
+
+A web-based, searchable dependency report is available by adding the --scan option.
+
+
+BUILD SUCCESSFUL in 5s
+1 actionable task: 1 executed
+
+
+{gradle has been automatically deployed as we ran the gradle wrapper}
+
+
+Now we need to initialise the gradle build 
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ./gradlew init
+
+BUILD SUCCESSFUL in 1s
+2 actionable tasks: 2 executed
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ls -la
+total 200
+drwxr-xr-x. 11 root root   4096 Mar  9 05:28 .
+dr-xr-x---.  6 root root    251 Mar  9 05:27 ..
+-rw-r--r--.  1 root root   1079 Mar  9 05:25 app.js
+drwxr-xr-x.  2 root root     17 Mar  9 05:25 bin
+-rw-r--r--.  1 root root    201 Mar  9 05:28 build.gradle
+drwxr-xr-x.  2 root root     25 Mar  9 05:25 data
+drwxr-xr-x.  8 root root    163 Mar  9 05:25 .git
+-rw-r--r--.  1 root root     20 Mar  9 05:25 .gitignore
+drwxr-xr-x.  3 root root     21 Mar  9 05:25 gradle
+drwxr-xr-x.  5 root root     65 Mar  9 05:27 .gradle
+-rwxr-xr-x.  1 root root   5296 Mar  9 05:28 gradlew
+-rw-r--r--.  1 root root   2260 Mar  9 05:28 gradlew.bat
+-rw-r--r--.  1 root root    482 Mar  9 05:25 package.json
+-rw-r--r--.  1 root root 160017 Mar  9 05:25 package-lock.json
+drwxr-xr-x.  4 root root     44 Mar  9 05:25 public
+-rw-r--r--.  1 root root    585 Mar  9 05:25 README.md
+drwxr-xr-x.  2 root root     39 Mar  9 05:25 routes
+-rw-r--r--.  1 root root    382 Mar  9 05:28 settings.gradle
+drwxr-xr-x.  2 root root     27 Mar  9 05:25 test
+drwxr-xr-x.  2 root root     61 Mar  9 05:25 views
+
+{this has generated a build.gradle file which we can use to configure our build process}
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# cat build.gradle 
+plugins {                                  (this is a nodejs plugin which will handle diferent aspects of the build related to nodejs)
+ id 'com.moowork.node' version "1.2.0"
+}
+
+node {                                     (this will instruct the node plugin to download and install nodejs locally for this project)
+ download = true
+}
+
+task build                             (this is the task that will be run to execute the build, so dependecies have to be set to this task)
+
+
+build.dependsOn npm_build              (this is part of the node plugin)
+
+
+
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ./gradlew build
+Download https://plugins.gradle.org/m2/com/moowork/node/com.moowork.node.gradle.plugin/1.2.0/com.moowork.node.gradle.plugin-1.2.0.pom
+Download https://plugins.gradle.org/m2/com/moowork/gradle/gradle-node-plugin/1.2.0/gradle-node-plugin-1.2.0.pom
+Download https://plugins.gradle.org/m2/com/moowork/gradle/gradle-node-plugin/1.2.0/gradle-node-plugin-1.2.0.jar
+Download https://nodejs.org/dist/v6.9.1/node-v6.9.1-linux-x64.tar.gz
+
+BUILD SUCCESSFUL in 8s
+2 actionable tasks: 2 executed
+
+
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# cat build.gradle 
+plugins {                                  
+ id 'com.moowork.node' version "1.2.0"
+}
+
+node {                                     
+ download = true
+}
+
+task build                             
+
+
+build.dependsOn npm_build              
+npm_build.dependsOn npmInstall                 (npm install downloads any shared library dependencies that are required by this nodejs app)
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ./gradlew build
+
+> Task :npmInstall 
+npm WARN deprecated jade@1.11.0: Jade has been renamed to pug, please install the latest version of pug instead of jade
+npm WARN deprecated transformers@2.1.0: Deprecated, use jstransformer
+npm WARN deprecated constantinople@3.0.2: Please update to at least constantinople 3.1.1
+<=====--------> 40% EXECUTING [1m 37s]
+
+
+Now we need to ensure that build runs automated tests
+
+vi build.gradle
+plugins {
+ id 'com.moowork.node' version "1.2.0"
+}
+
+node {
+ download = true
+}
+
+task build 
+
+
+build.dependsOn npm_build
+npm_build.dependsOn npmInstall
+npm_build.dependsOn npm_test       (this is the test which is part of the plugin)
+npm_test.dependsOn npmInstall
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ./gradlew build
+
+> Task :npm_test 
+
+> cicd-pipeline-train-schedule-git@0.0.0 test /root/cicd-pipeline-train-schedule-gradle
+> mocha
+
+
+
+  Index Page
+GET / 200 288.636 ms - 829
+    ✓ renders successfully (318ms)
+
+  Trains API
+GET /trains 200 4.250 ms - 1093
+    ✓ returns data successfully
+
+
+  2 passing (337ms)
+
+
+
+BUILD SUCCESSFUL in 2s
+4 actionable tasks: 2 executed, 2 up-to-date
+
+
+Now we need to create a task to create a deployable archive of the source code
+Gradle comes with a built-in finctionality for this 
+
+vi build.gradle
+
+plugins {
+ id 'com.moowork.node' version "1.2.0"
+}
+
+node {
+ download = true
+}
+
+task build 
+task zip(type: Zip) {                  (zip task to create a zip file of the source code which is deployable)
+ from ('.') {                    (here we're specifying that the zip task needs to be executed in the current dir. i.e root dir or project)
+  include "*"                    (this means to only inclue the individual files and not dir)
+  include "bin/**"               (from here we specif which directories we want to be included)  
+  include "data/**"
+  include "node_modules/**"
+  include "public/**"
+  include "routes/**"
+  include "views/**"  
+}
+destinationDir(file("dist"))     (here we're specifying that the zip file needs to be stored in a dir called dist in the projects root dir)
+baseName "trainSchedule"         (this will be the name of the zip file)
+}
+
+build.dependsOn zip 
+zip.dependsOn npm_build
+build.dependsOn npm_build
+npm_build.dependsOn npmInstall
+npm_build.dependsOn npm_test
+npm_test.dependsOn npmInstall
+
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ./gradlew build
+
+> Task :npm_test 
+
+> cicd-pipeline-train-schedule-git@0.0.0 test /root/cicd-pipeline-train-schedule-gradle
+> mocha
+
+
+
+  Index Page
+GET / 200 287.695 ms - 829
+    ✓ renders successfully (316ms)
+
+  Trains API
+GET /trains 200 3.349 ms - 1093
+    ✓ returns data successfully
+
+
+  2 passing (333ms)
+
+
+
+BUILD SUCCESSFUL in 5s
+5 actionable tasks: 3 executed, 2 up-to-date
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ls -la
+total 208
+drwxr-xr-x.  13 root root   4096 Mar  9 06:07 .
+dr-xr-x---.   8 root root    278 Mar  9 05:39 ..
+-rw-r--r--.   1 root root   1079 Mar  9 05:25 app.js
+drwxr-xr-x.   2 root root     17 Mar  9 05:25 bin
+-rw-r--r--.   1 root root    495 Mar  9 06:03 build.gradle
+drwxr-xr-x.   2 root root     25 Mar  9 05:25 data
+drwxr-xr-x.   2 root root     31 Mar  9 06:07 dist
+drwxr-xr-x.   8 root root    163 Mar  9 05:25 .git
+-rw-r--r--.   1 root root     20 Mar  9 05:25 .gitignore
+drwxr-xr-x.   3 root root     21 Mar  9 05:25 gradle
+drwxr-xr-x.   6 root root     79 Mar  9 05:31 .gradle
+-rwxr-xr-x.   1 root root   5296 Mar  9 05:28 gradlew
+-rw-r--r--.   1 root root   2260 Mar  9 05:28 gradlew.bat
+drwxr-xr-x. 134 root root   4096 Mar  9 05:35 node_modules
+-rw-r--r--.   1 root root    482 Mar  9 05:25 package.json
+-rw-r--r--.   1 root root 160017 Mar  9 05:25 package-lock.json
+drwxr-xr-x.   4 root root     44 Mar  9 05:25 public
+-rw-r--r--.   1 root root    585 Mar  9 05:25 README.md
+drwxr-xr-x.   2 root root     39 Mar  9 05:25 routes
+-rw-r--r--.   1 root root    382 Mar  9 05:28 settings.gradle
+drwxr-xr-x.   2 root root     27 Mar  9 05:25 test
+drwxr-xr-x.   2 root root     61 Mar  9 05:25 views
+
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# ls -la dist/
+total 14056
+drwxr-xr-x.  2 root root       31 Mar  9 06:07 .
+drwxr-xr-x. 13 root root     4096 Mar  9 06:07 ..
+-rw-r--r--.  1 root root 14387694 Mar  9 06:07 trainSchedule.zip
+
+
+Now we need to push it to the github
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# git status
+# On branch master
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	build.gradle
+#	dist/
+#	settings.gradle
+nothing added to commit but untracked files present (use "git add" to track)
+
+{we can see that dist is part of the changed files, we don't want to push the archived file to github, we only want to push the source code}
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# cat .gitignore
+node_modules
+.gradle
+dist
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# git status
+# On branch master
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#	modified:   .gitignore
+#
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	build.gradle
+#	settings.gradle
+no changes added to commit (use "git add" and/or "git commit -a")
+
+
+{now git is ignoring the dist dir}
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# git add .
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# git commit -m "add gradle build"
+[master d309b09] add gradle build
+ 3 files changed, 41 insertions(+), 1 deletion(-)
+ create mode 100644 build.gradle
+ create mode 100644 settings.gradle
+
+[root@ip-10-0-1-67 cicd-pipeline-train-schedule-gradle]# git push 
+warning: push.default is unset; its implicit value is changing in
+Git 2.0 from 'matching' to 'simple'. To squelch this message
+and maintain the current behavior after the default changes, use:
+
+  git config --global push.default matching
+
+To squelch this message and adopt the new behavior now, use:
+
+  git config --global push.default simple
+
+See 'git help config' and search for 'push.default' for further information.
+(the 'simple' mode was introduced in Git 1.7.11. Use the similar mode
+'current' instead of 'simple' if you sometimes use older versions of Git)
+
+Username for 'https://github.com': gogate1
+Password for 'https://gogate1@github.com': 
+Counting objects: 7, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (5/5), 883 bytes | 0 bytes/s, done.
+Total 5 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To https://github.com/gogate1/cicd-pipeline-train-schedule-gradle.git
+   ca4f7b2..d309b09  master -> master
+
+
+
+CONTINUOUS INTEGRATION
+
+The practice of frequently merging code changes
+
+A CI server detects the code change in SCM and runs a build to automate the compiling of the code and running automated tests
+
+If the build fails an email can be triggered to the team to notify of the failure
+
+==> Installing jenkins
+
+https://jenkins.io/doc/book/installing/
+
+Jenkins needs java 1.8 version to run
+
+sudo yum remove java
+
+sudo yum install java-1.8.0-openjdk -y
+
+install dependencies:-
+
+yum install epel-release
+
+sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+
+sudo rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+
+Install jenkins:-
+sudo yum install jenkins-1.121.1
+
+Enable and start jenkins:-
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+
+Install all the recommended jenkins plugins and create a user in jenkins
+
+
+==> Setting up Jenkins Projects:
+
+The configuration which controls what happens when a piece of automation is executed in jenkins is called a project
+
+There are many types of projects in jenkins. Simple way to implement a CI build in jenkins is by using a freestype project
+
+setting up a basc freestyle project-
+
+click on new item in jenkins and provide a name for the project and select 'freestyle project'
+
+Now we need to do the build configurations,
+As we are using git as the SCM, we need to click on git and provide the url to the repo
+https://github.com/linuxacademy/cicd-pipeline-train-schedule-jenkins
+
+since this is a public repo, we don't need to give any credentials to access it 
+Also leave the branches to build in */master as we're building the master and not any branch
+
+Now we need to add a build step. We click on build step and select gradle as our source code already has a groovy script included in it
+
+We need to click on use gradle wrapper as we're using the gradle wrapper and specify 'build' in task. This will call the './gradlew build' to build the configuration 
+
+Now since we need a zip file at the end of the build, we need to click on post build actions and select 'archive the artifacts'
+
+we need to provide the name of the zip file to be generated. i.e,' dist/trainSchedule.zip' as this is what is mentioned in the build.gradle file
+
+Now save the project and click on build now in the dashboard
+
+Once the build has completed running it will show success and we can also see and download the artifact that's created
+
+
+
+==>Triggering builds with git hooks:
+
+WebHooks are event notifications made from one app to another over http
+
+We can use webhooks in jenkins to have github notify jenkins whenever there's a code change so that jenkins and run the job immediately 
+
+In jenkins we can use an API token to connect to the github API and automatically setup configurations on both sides to establish the webhook 
+
+Steps to follow to setup github webhook in jenkins-
+1. Create an access token in github and give that token permission to read and create webhooks 
+2. Add a github server in jenkins for github.com
+3. We create a jenkins credentials to to securely store the API token that we create on github and we'll configure the github server configuration in jenkins to use that token
+4. We need to check if we selected 'Manage Hooks' in the github server configuration
+5. In the project configuration we need to select 'GitHub hook trigger for GITScm polling' under 'Build Triggers'
+
+Here we need to have permissions in github for jenkins to create a webhook within this repository 
+
+To generate the github API token,
+
+click on avatar on top right and select 'settings'
+select developer settings in the left side list
+click on 'personal access tokens'
+click on generate a new token
+Give a name for the token and then select the type of permissions required
+{in this case 'admin:repo_hook'. This will give read and write permissions for repository hooks}
+Click generate token
+
+This will return an API key which we need to copy and use in jenkins
+
+In jenkins click on manage jenkins and then on configure system
+{here we can configure jenkins to talk to the github server}
+
+Scroll down and click on 'add github server'
+We need to provide a name and we can leave the API url as is 
+Then, to configure the key, click on add beside credentials and click on jenkins
+For kind, select 'secret text' as we're going to configure a key 
+Now if we click on the dropdown beside 'Credentials' we can see the key just added and select it
+Make sure that the manage hooks check box is checked and then clikc save
+
+{Now we've setup jenkins to talk to and authenticate github.com}
+{Now we need to configure the freestyle project to utilise the webhooks}
+
+Click on the project and click on configure on the left side list
+Here, we need to configure the correct github url
+Then we need to click on build trigges and select 'GitHub hook trigger for GITScm polling'
+
+
+
+CONTINUOUS DELIVERY:
+
+==> Jenkins Pipelines:
+
+Jenkins pipelines is a collection of various jenkins plugins to enable Continuous Delivery
+
+Pipeline is implemented in a file that is kept in a source control along with rest of the code. This file is called a Jenkinsfile
+
+In jenkins while creating a job we need to select 'Pipeline' or 'MultiBranch Pipeline' as project type instead of freestyle
+
+Pipeline uses a domain specific language (DSL) that is used to define the pipeline logic
+
+There are two types of syntax from which we can choose for the DSL
+1. Scripted
+2. Declarative
+
+==> Jenkins Pipeline Stages and Steps:
+
+Stages and Steps are what we're going to define in a jenkins file 
+
+Stages are the large pieces of the CD process
+ex:
+- Build the code
+- Test the code
+- Deploy to staging
+- Deploy to production
+
+Stages are made up of Steps. 
+Steps are the individual tasks that need to be completed to make up a stage 
+ex:
+- Execute a command 
+- Copy files to a server
+- Restart a service
+- Wait for human input 
+
+Steps are implemented through special declarative keywords in the jenkinsfile DSL or jenkins plugins can add new steps
+
+ex:
+
+pipeline {
+   agent any
+   stages { 
+    stage('Build') {
+     steps { 
+      echo "Running build automation"  
+      sh './gradlew build --no-daemon'
+      archiveArtifacts artifacts: 'dist/trainSchedule.zip'    #this stores the mentioned artifact as the jenkins artifcat
+      }
+     }
+    }
+   }   
+
+
+==> Deployment with jenkins pipelines: (Setting up multi branch pipeline project)
+
+-Install the following plugins in jenkins
+
+Publish Over SSH : This will let us execute ssh command to copy files etc to the webservers
+
+- In the configure section in Manage Jenkins we can see the newly added plugin 'Publish Over SSH'
+We need to mention the IP addresses of the web servers here (click add under ssh servers and add the ip's)
+To store the credentials to connect to the webservers, click on 'credentials' in the jenkins home screen and select on jenkins and click add credentials {here, in the ID section we need to add the id with which we can referrence the credentials in the pipeline}
+
+- Click on new project and select 'Multibranc Pipeline Project' 
+
+- In the pipeline configuration under 'Branch Sources' click on 'add source' and then click on 'github'
+First thing we do here is to add the credentials, we can use the api key that we have configured in the global settings for web hooks.
+Click on 'add' and select jenkins (jenkins will accept only username and password kind and not secret text for the credentials). 
+For the user give the guthub username and for password we can give the github api key 
+Type in the github user name in the ''owner' section. Then we can choose the repositories from the list below and click save
+
+{now we need to implement stages to deploy the build in the 'staging' and 'production'}
+{we store the pipeline script in a jenkinsfile and include it in the root directory of the project}
+
+ex:
+pipeline {
+   agent any
+   stages { 
+    stage('Build') {
+     steps { 
+      echo "Running build automation"  
+      sh './gradlew build --no-daemon'
+      archiveArtifacts artifacts: 'dist/trainSchedule.zip'    #this stores the mentioned artifact as the jenkins artifact
+      }
+     }   
+    stage('DeployToStaging') {
+      when {                                         # for the stage to execute, this condition needs to be true
+           branch 'master'
+       }
+       steps {                                      #this is the credential we created in the jenkins credentials   
+          withCredentials([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+           sshPublisher(
+              failOnError: true,
+              continueOnError: flase,
+              publishers: [
+                sshPublisherDesc{
+                   configName: 'staging',
+                   sshCredentials: [
+                      username: "$USERNAME",
+                      encryptedPassphrase: "$USERPASS"
+                      ],
+                      transfers: [
+                           sshTransfer(
+                                 sourceFiles: 'dist/trainSchedule.zip',
+                                 removePrefix: 'dist/',
+                                 remoteDirectory: '/tmp',
+                                 execCommand: 'sudo /usr/bin/systemctl stop train-schedule && rm -rf /opt/train-schedule/* && unzip /tmp/trainSchedule.zip -d /opt/train-schedule && sudo /usr/bin/systemctl start train-schedule'
+           )
+           ]
+          }
+          ]
+         )
+         }
+         }
+         }
+    stage('DeployToProduction') {
+      when {                                         # for the stage to execute, this condition needs to be true
+           branch 'master'
+       }
+       steps {
+           input "does the staging environment look ok?"   #this will take the user input to proceed(abort/proceed) 
+           milestone(1)                                    #this will ensure that the build run first has milestone set 1
+                                                           #so, if same build is triggered again, while it will have milestone 2
+                                                           #this build is waiting for approval then it will not let the older
+                                                           #build run past this point and will ensure the newer build is 
+                                                           #deployed              
+          withCredentials([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+           sshPublisher(
+              failOnError: true,
+              continueOnError: flase,
+              publishers: [
+                sshPublisherDesc{
+                   configName: 'production',
+                   sshCredentials: [
+                      username: "$USERNAME",
+                      encryptedPassphrase: "$USERPASS"
+                      ],
+                      transfers: [
+                           sshTransfer(
+                                 sourceFiles: 'dist/trainSchedule.zip',
+                                 removePrefix: 'dist/',
+                                 remoteDirectory: '/tmp',
+                                 execCommand: 'sudo /usr/bin/systemctl stop train-schedule && rm -rf /opt/train-schedule/* && unzip /tmp/trainSchedule.zip -d /opt/train-schedule && sudo /usr/bin/systemctl start train-schedule'))
+           )
+           ]
+          }
+          ]
+         )
+         }
+         }
+         }
+
+      
+
+==> Installing Docker on Jenkins:
+
+On the jenkins server install docker-ce and then start and enable it 
+
+sudo groupadd docker     #to create a docker group
+sudo usermod -aG docker jenkins 
+systemctl restart jenkins
+systemctl restart docker
+
+{now we can user docker from jenkins}
+
+
+
+==> Jenkins piple and Dockerized app:
+
+In 'Manage Jenkins' click on 'Configure System'. Under 'Global Properties' check the 'Environment Variables' box and provide the details
+name: prod_ip
+Value: 34.28.122.2
+
+Click on add
+In the main jenkins page click on credentials and add new credentials for docker_hub_login
+
+Create an api key in jenkins for webhooks and configure that in the source section of the multibranch pipeline project
+
+Dockerfile will be part of the source code
+
+cat Dockerfile
+FROM node:carbon                  #since train-schedule is a nodejs application we use the node:carbon as the parent image
+WORKDIR /usr/src/app              #specfying the working dir for commands that follow
+COPY package*.json ./             #here, package.json and packagelock.json file are important for nodejs application
+RUN npm install                   #this will referrence the above copied json files and install 
+COPY . .                          # now we copy the rest of the source code into the app 
+EXPOSE 8080
+CMD [ "npm", "start" ]
+
+In the jenkins file we need to add the code w.r.t docker
+
+pipeline {
+   agent any
+   stages { 
+    stage('Build') {
+     steps { 
+      echo "Running build automation"  
+      sh './gradlew build --no-daemon'
+      archiveArtifacts artifacts: 'dist/trainSchedule.zip'    #this stores the mentioned artifact as the jenkins artifact
+      }
+     }   
+    stage('Build Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {                                             #this lets us do script style pipeline code
+                    app = docker.build("rohitreddie/train-schedule")     #this will find the docker file and run the docker build
+                    app.inside {                                     #this will run the docker image and run this command inside of it
+                        sh 'echo $(curl localhost:8080)'             #this is a smoke test to see if the container has run
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image') {   
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {	
+                        app.push("${env.BUILD_NUMBER}")      #this is referrencing the app variable that was created above. All this is 
+                                                             #doing is it's pushing the image that was created above
+                                                             #env.BUILD_NUMBER is the tag 
+                        app.push("latest")                   #we're also doing a second push with the tag latest
+                    }
+                }
+            }
+        }                               #until this step we've created and pushed the docker image to repository
+                                        #from here, it needs to login to the production server and pull the image and run it
+                                        #one thing to keep in mind is that if we use docker run, it will create a new container everytime
+                                        #we need to stop and remove the running container and then replace it with the new one
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
+                withCredentials([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME', passwordVariable: 'USERPASS')]) {
+                    script {
+                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker pull rohitreddie/train-schedule:${env.BUILD_NUMBER}\""
+                        try {
+                            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker stop train-schedule\""
+                            sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker rm train-schedule\""
+                        } catch (err) {
+                            echo: 'caught error: $err'
+                        }
+                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker run --restart always --name train-schedule -p 8080:8080 -d rohitreddie/train-schedule:${env.BUILD_NUMBER}\""
+                    }
+                }
+            }
+        }
+
+
+==> ORCHESTRATION
+
+
+--> Setting up a kubernetes cluster
+
+To implement kubernetes we need to use the Kubernetes Continuous Deploy plugin 
+
+for steps:
+https://jenkins.io/doc/pipeline/steps/kubernetes-cd
+
+In jenkins click on add global credentials and select the 'Kubernetes COnfiguration' in the kind dropdown
+Then we need to procide a name for the ID and description 
+Then select 'Enter directly' in the 'Kubeconfig' section
+{here we can paste the entire contents of the kubeconfig file so that jenkins securely access the kubernetes master node and perform the deployment}
+
+cat ~/.kube/config   {we can find the config file in this path on the master node}
+
+The github and dockerhub credentials should be setup prior to this
+
+Now we need to create Kubernetes config .yml file
+
+cat train-schedule-kube.yml
+
+kind: Service                            #we initialise service to access the nodes that run our application
+apiVersion: v1
+metadata:
+  name: train-schedule-service
+spec:
+  type: NodePort                         #we're setting up a nodeport service to enable access of application on specific ports on a node
+  selector:
+    app: train-schedule
+  ports:
+  - protocol: TCP                        #this is the protocol for the acess via ports on node
+    port: 8080                           #this is the port on which the application can be accessed
+    nodePort: 8080
+
+---                                      #we can put multiple docs in same file using 'three dashes'
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: train-schedule-deployment
+  labels:
+    app: train-schedule
+spec:                                   #in this spec we're mentioning it to create 2 replicas
+  replicas: 2
+  selector:
+    matchLabels:
+      app: train-schedule               #this the the label in reference to which the spec will choose the template for the replicas from 
+                                        #the deployment that corresponds to the label 
+  template:
+    metadata:
+      labels:
+        app: train-schedule             #this is to apply the mentioned label to any pods deployed via this deployment
+    spec:
+      containers:                       #we specify the container details here like image and name for the container 
+      - name: train-schedule            
+        image: $DOCKER_IMAGE_NAME:$BUILD_NUMBER   #the kube plugin we're using will be able to check for env variables 
+        ports:
+        - containerPort: 8080
+
+
+
+Now we need to edit the jenkins files to include the kubernetes plugin
+
+pipeline {
+    agent any
+    environment {
+      
+        DOCKER_IMAGE_NAME = "rohitreddie/train-schedule"
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Running build automation'
+                sh './gradlew build --no-daemon'
+                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+            }
+        }
+        stage('Build Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    app = docker.build(DOCKER_IMAGE_NAME)
+                    app.inside {
+                        sh 'echo Hello, World!'
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
+                }
+            }
+        }
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
+                //implement Kubernetes deployment here
+                kubernetesDeploy(                              #this refers to the kubernetes plugin that we've installed
+                    kubeconfigId: 'kubeconfig',                #this is the id of the kubernetes credential we created above
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true             #this is the functionality of the plugin which enables the replacement of
+                                                               #variabels from env variables in the kubernetes yaml file
+            }
+        }
+    }
+}
+
+
+now if we run the deployment then everything will be configured and deployed in the pods 	
+
+
+
+==> MONITORING:
+
+
+For monitoring and alerting we can use premetheus or grafana
+
+First we need to do helm installation
+
+Helm is a tool for installing software using Kubernetes charts
+Charts make it easier to install software on a kubernetes cluster in a standardized config
+The kubernetes charts repo includes charts for bothe Prometheus and Grafana
+
+{*** Here the kubernetes node on with the sample train-schedule app is running will automatically servers data on a /metrics endpoint. We configure this endpoint on grafana to access all the required metrics to enable the collection of data}
+
+
+helm init --stable-repo-url=https://charts.helm.sh/stable --wait           #to initialise helm and create helm pods on the master
+
+{helm is ready and initialized now. Now we need to use helm to install premetheus and grafana}
+
+
+clone the kubernetes repo for charts
+
+git clone https://github.com/kubernetes/charts
+
+git checkout efdcffe0b6973111ec6e5e83136ea74cdbe6527d
+{by doing this commit we're checking out the last stable commit of the respectivee charts}
+
+
+{now we need to make a values.yml file for premetheus and grafana. Here we overwrite some of the default settings}
+cat prometheus-values.yml
+alertmanager:
+  persistentVolume:
+    enabled: false
+server:
+  persistentVolume:
+    enabled: false
+{here we set the persistent volumes off and use in-memory storage}
+
+
+helm install -f prometheus-values.yml charts/stable/prometheus --name  prometheus --namespace prometheus
+
+
+root@ip-10-0-1-101:~# kubectl get pods -n prometheus
+NAME                                             READY     STATUS    RESTARTS   AGE
+prometheus-alertmanager-7b47d55bdf-8fvjz         1/2       Running   0          29s
+prometheus-kube-state-metrics-6584885ccf-gnjwt   1/1       Running   0          29s
+prometheus-node-exporter-6lqjx                   1/1       Running   0          29s
+prometheus-pushgateway-66c9fdb48f-7fwgd          1/1       Running   0          29s
+prometheus-server-65d5cc8544-kfkwb               1/2       Running   0          29s
+
+
+root@ip-10-0-1-101:~# cat grafana-values.yml
+adminPassword: password
+
+helm install -f grafana-values.yml charts/stable/grafana/ --name grafana --namespace grafana
+
+root@ip-10-0-1-101:~# kubectl get pods -n grafana
+NAME                      READY     STATUS    RESTARTS   AGE
+grafana-d65c89cdc-tcdqg   0/1       Running   0          28s
+
+{to access grafana over a port on the web, we need to create a nodePort service for it to be accessible from outside}
+
+root@ip-10-0-1-101:~# cat grafana-ext.yml
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: grafana
+  name: grafana-ext
+spec:
+  type: NodePort
+  selector:
+    app: grafana
+  ports:
+  - protocol: TCP
+    port: 3000
+    nodePort: 8081
+
+
+now we can access grafana on the nodes public ip and the above port and login using the credentials we specified above
+
+click on add datasource
+name it kubernetes and select prometheus for the type 
+ulr: http://prometheus-server.prometheus.svc.cluster.local
+
+save & test
+
+Now we need to create a dashboard. 
+In the left side panel click in the plus sign an click on import to import of the the community dashboards
+
+enter 3131 for the id
+In the prometheus installation we names our databource kubernetes so select that from the dorp down and click on create
+
+
+Creating our own dashboard:
+
+click on pplus sign and select dashboard then select graph for the template
+Now click on panel title and click on edit
+In the general table give it a name
+In the metrics tab paste the below query which will return the count of requests per minute
+sum(rate(http_request_duration_ms_count[2m])) by (service, route, method, code)  * 60
+
+
+
+
+==> SELF HEALING:
+
+Self healing is the ability to detect a problem and to take necessary actions to deal with it 
+
+Docker containers stop when their main process exits. If a container stops then kubernetes will detect it and restart it by default 
+
+
+Creating Liveness Probes in Kubernetes:
+Liveness probes are custom checks run periodically against the containers to detect whether they're healthy or not. If a probe determines a container as unhealthy, it will be restarted
+
+
+cat train-schedule-kube.yml
+
+kind: Service
+apiVersion: V1
+metadata:
+ name: train-schdule-service
+ annotations:
+  prometheus.io/scrape: 'true'
+spec:
+ type: NodePort
+ selector:
+  app:train-schedule
+ ports:
+ - protocol: TCP
+   port: 8080
+   modePort: 8080
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+ name: train-schedule-deployment
+ labels:
+  app: train-schedule
+spec:
+ replicas: 2
+ selector: 
+  matchLabels:
+   app: train-schedule
+  spec:
+   containers:
+   - name: train-schedule
+     image: linuxacademycontent/train-schedule:selfhealing
+     ports:
+     - containerPort: 8080 
+     livenessProbe:
+      httpGet:
+       path:/
+       port:8080
+      initialDelaySeconds: 15
+      timeoutSeconds: 1
+      periodSeconds: 10
+      
+
+==> Horizontal Pod Autoscalers (HPA) in Kubernetes
+
+HPA works by periodically checking the metrics api for the metrics and autoscaling based on the provided configuration
+
+Steps to implement autoscaling using HPA-
+- Install metrics api
+- Set a resource request for the pods that will be autoscaled
+- Create the HPA
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: train-schedule-service
+spec:
+  type: NodePort
+  selector:
+    app: train-schedule
+  ports:
+  - protocol: TCP
+    port: 8080
+    nodePort: 8080
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: train-schedule-deployment
+  labels:
+    app: train-schedule
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: train-schedule
+  template:
+    metadata:
+      labels:
+        app: train-schedule
+    spec:
+      containers:
+      - name: train-schedule
+        image: linuxacademycontent/train-schedule:autoscaling
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
+          periodSeconds: 10
+        resources:                              #here we specify the reference cpu of which we mention the limits in the below section
+          requests:                              
+            cpu: 200m                           #this means 200 milli cpu
+---                                             #this means we're defining a new yaml doccument
+
+apiVersion: autoscaling/v2beta1                 #from here, we're defining the properties of the horizontal scaler
+kind: HorizontalPodAutoscaler
+metadata:
+  name: train-schedule
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: train-schedule-deployment
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 50
+
+
+
+
+==> Canary Testing:
+
+Unit, integration and manual test are run in the staging environment. But these tests can't replicate the live environment
+
+In canary testing we push the new code to a certain users and check for any descrepencies 
+
+Implementing canary testing in kubernetes:
+- We need to add lables to differentiate canary pods with old pods
+- Create new deployment for Canary pods
+- Roll out the new code the normal pods after the canary test has been completed
+
+pipeline {
+    agent any
+    environment {
+        
+        DOCKER_IMAGE_NAME = "rohitreddie/train-schedule"
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Running build automation'
+                sh './gradlew build --no-daemon'
+                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+            }
+        }
+        stage('Build Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    app = docker.build(DOCKER_IMAGE_NAME)
+                    app.inside {
+                        sh 'echo Hello, World!'
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
+                }
+            }
+        }
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+}
+
+cat train-schedule-kube.yml                #this is the kube config file for the production pods
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: train-schedule-service
+spec:
+  type: NodePort
+  selector:
+    app: train-schedule
+  ports:
+  - protocol: TCP
+    port: 8080
+    nodePort: 8080
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: train-schedule-deployment
+  labels:
+    app: train-schedule
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: train-schedule
+      track: stable                                     #this lable will keep these pods seperate from the canary pods
+  template:
+    metadata:
+      labels:
+        app: train-schedule
+        track: stable
+    spec:
+      containers:
+      - name: train-schedule
+        image: $DOCKER_IMAGE_NAME:$BUILD_NUMBER
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 200m
+
+{in the above file we can see that the service only selects the app: train-schedule tag and is not configured to worry about the track tag. This way we can server requests to the pods running on both the normal and canary pods via the same service and we can seperate them based on the nodePort configuration}
+ 
+
+cat train-schedule-kube.yml                #this is the kube config file for the canary pods
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: train-schedule-service-canary
+spec:
+  type: NodePort
+  selector:
+    app: train-schedule
+    track: canary
+  ports:
+  - protocol: TCP
+    port: 8080
+    nodePort: 8081
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: train-schedule-deployment-canary
+  labels:
+    app: train-schedule
+spec:
+  replicas: $CANARY_REPLICAS
+  selector:
+    matchLabels:
+      app: train-schedule
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: train-schedule
+        track: canary
+    spec:
+      containers:
+      - name: train-schedule
+        image: $DOCKER_IMAGE_NAME:$BUILD_NUMBER
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 200m
+
+{Here also we've specified a service but we specified tags for track as well. That means that we can access only the canary pods via this service. 
+Via the main service we can access both normal and canary pods so we use it to divert user requests and check. If we only want to access the canary pods seperately for some internal testing then we can use the above service}
+
+
+Now we need to modify the jenkins file 
+
+pipeline {
+    agent any
+    environment {
+        
+        DOCKER_IMAGE_NAME = "rohitreddie/train-schedule"
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Running build automation'
+                sh './gradlew build --no-daemon'
+                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+            }
+        }
+        stage('Build Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    app = docker.build(DOCKER_IMAGE_NAME)
+                    app.inside {
+                        sh 'echo Hello, World!'
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
+                }
+            }
+        }
+        stage('CanaryDeploy') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 1              #this variable will be used in the canary.yml file
+            }
+            steps {
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+         stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 0
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+}
+
+[-->
+Here, we have added a stage between the docker image push and the production deploy for the canary deployment. 
+This step will use the canary.yml file to deploy the application to canary pods.
+The CANARY_REPLICAS variable will be used in the canary.yml file. So this stage will create a canary deployment on 1 pod
+The next stage here is for the productionDeployment. In this stage we specify CANARY_REPLICAS=0 and redeploy the same canary.yml file
+This step will first ask for user input to go-ahead. Once the user input is given it will move on
+By doing this, it will check for pods with tag 'track: canary' and since the replicas is 0, it will delete the pods 
+And move on to another 'kubernetesDeploy' where it will deploy the new build in all the normal pods using the 'train-schedule-kube.yml'
+<--]
+
+This is how we have configured canary testing in the jenkins pipeline
+
+
+
+==> Fully automated deployment
+
+Setup the github_key, docker_hub_login and kubeconfig in global credentials
+
+Got to 'manage jenkins' and click on 'configure system'
+Under 'global properties' select 'environment variables' and add the kubernetes master ip as and env variable
+name: KUBE_MASTER_IP
+value: 'public ip of kube master'
+Setup github web hook 
+Instll the 'httprequest' plugin. Go to 'manage jenkins' and click on manage plugins and install
+HTTP Request plugin: this plugin will allow us to make http requests so that we can do smoke testing in the jenkins pipeline script
+Fork the repo 'cicd-pipeline-train-schedule-autodeploy' and click to edit the jenkinsfile
+
+pipeline {
+    agent any
+    environment {
+        
+        DOCKER_IMAGE_NAME = "rohitreddie/train-schedule"
+        CANARY_REPLICAS = 0
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Running build automation'
+                sh './gradlew build --no-daemon'
+                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+            }
+        }
+        stage('Build Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    app = docker.build(DOCKER_IMAGE_NAME)
+                    app.inside {
+                        sh 'echo Hello, World!'
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
+                }
+            }
+        }
+        stage('CanaryDeploy') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 1              #this variable will be used in the canary.yml file
+            }
+            steps {
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+        stage('SmokeTest'){
+          when {
+           branch 'master'
+           }
+          steps{
+           script{
+            sleep (time: 5)
+            def response= httpRequest(
+             url: 'http://$KUBE_MASTER_IP:8081',
+             timeout: 30
+           )
+           if(response.status !=200){
+            error("smoke test has failed")
+            } 
+            }
+            }
+          
+        }
+         stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            steps {
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+    Post {
+     cleanup {
+                 kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+             }
+           }
+         }
+
+This is the same file as the one we used for canary testing. But with some changes to make it fully automatic
+- Remove the manual input line 
+- Since there is no manual approval required for production deployment, we need to include some sanity/smoke tests in the pipeline to make sure the basic functionality is working fine. We do that by adding a stage for smoke test
+- In the smoke test block we're hitting the url on the kubernetes master public ip and returning a fail message if the status code returned is anything apart from 200
+- Here, we even modified the pod cleanup logic. As if it was as earlier, the clean up and prod deployment will not run if the smoke test fails and hence the canary pod with the faulty code will keep on running amongst the production pods. 
+  To mitigate this we need to introduce a post build block after the stage block
+- In the post build block we're specifying the kubernetesDeploy login we used above to delete the canary pod. Since we cannot define any environment variables in the post build block, we moved the 'CANARY_REPLICAS = 0' variable to the top
+
+
+
+
+=================================
+Jenkins slaves connect to the jenkins master using the Java network launch protocol
+https://dzone.com/articles/jenkins-03-configure-master-and-slave
+https://plugins.jenkins.io/pipeline-maven/
+https://www.jenkins.io/doc/book/pipeline-as-code/
+https://www.tutorialspoint.com/maven/maven_environment_setup.htm
+https://www.metamorphant.de/blog/posts/2019-03-11-jenkins-101-downstream-projects/
+https://www.guru99.com/maven-jenkins-with-selenium-complete-tutorial.html
+
+maven implementation:
+Plugin - pipeline maven
+-The withMaven step configures a maven environment to use within a pipeline job by calling sh "mvn …​ or bat "mvn …​. The selected maven installation is configured and prepended to the path.
+-This plugin allows transitioning smoothly from the legacy Maven Integration job type by allowing to reuse Maven Settings Support and by proposing the Trigger downstream pipeline when a snapshot is built.
+-Before creating a POM, we should first decide the project group (groupId), its name (artifactId) and its version as these attributes help in uniquely identifying the project in repository.
+
+maven plugin in POM.xml in live
+
+<plugins>
+                        <plugin>
+                                <artifactId>maven-eclipse-plugin</artifactId>
+                                <version>2.9</version>
+                                <configuration>
+                                        <additionalProjectnatures>
+                                                <projectnature>org.springframework.ide.eclipse.core.springnature</projectnature>
+                                        </additionalProjectnatures>
+                                        <additionalBuildcommands>
+                                                <buildcommand>org.springframework.ide.eclipse.core.springbuilder</buildcommand>
+                                        </additionalBuildcommands>
+                                        <downloadSources>true</downloadSources>
+                                        <downloadJavadocs>true</downloadJavadocs>
+                                </configuration>
+                        </plugin>
+                        <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-compiler-plugin</artifactId>
+                                <version>2.3.2</version>
+                                <configuration>
+                                        <source>1.8</source>
+                                        <target>1.8</target>
+                                        <compilerArgument>-Xlint:all</compilerArgument>
+                                        <showWarnings>true</showWarnings>
+                                        <showDeprecation>true</showDeprecation>
+                                </configuration>
+                        </plugin>
+
+                       
+                        <dependency>
+                             <groupId>junit</groupId>
+                             <artifactId>junit</artifactId>
+                             <version>4.7</version>
+                             <scope>test</scope>
+                     </dependency>
+
+                       <dependency>
+                 <groupId>org.springframework</groupId>
+                 <artifactId>spring-test</artifactId>
+                 <version>3.1.0.RELEASE</version>
+             </dependency>
+
+
+--------> jnuit, selenium, testng dependencies in pom.xml
+<dependencies>			
+        <dependency>				
+             <groupId>junit</groupId>								
+             <artifactId>junit</artifactId>								
+             <version>3.8.1</version>								
+             <scope>test</scope>								
+        </dependency>				
+        <dependency>				
+            <groupId>org.seleniumhq.selenium</groupId>								
+            <artifactId>selenium-java</artifactId>								
+            <version>2.45.0</version>								
+		</dependency>				
+        <dependency>				
+            <groupId>org.testng</groupId>								
+            <artifactId>testng</artifactId>								
+            <version>6.8.8</version>								
+            <scope>test</scope>							  			
+       </dependency>				
+</dependencies>
+<----------------------
+Additionally, we need to add
+
+maven-compiler-plugin
+maven-surefire-plugin
+testng.xml
+to pom.xml.
+
+The maven-surefire-plugin is used to configure and execute tests. Here plugin is used to configure the testing.xml for TestNG test and generate test reports.
+
+The maven-compiler-plugin is used to help in compiling the code and using the particular JDK version for compilation. Add all dependencies in the following code snippet, to pom.xml in the <plugin> node:
+Build pipeline plugin - plugin to configure donwstream jobs in a pipeline 
+
+
+=================================
+
+
+
+
+
+
+
+
+
+
+
