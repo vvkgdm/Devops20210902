@@ -1,0 +1,254 @@
+Setting up Ansible practice env:
+
+1  curl -fsSl https://get.docker.com -o get.docker.sh
+    2  ls -lrth
+    3  chmod a+x get.docker.sh 
+    4  bash get.docker.sh
+    5  docker --help
+    6  sudo usermod -aG docker vivek_study
+    7  sudo usermod -aG docker vivek_study1
+    8  sudo curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-
+compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    9  ll 
+   10  ll /usr/local/bin/docker-compose
+   11  ls  /usr/local/bin/docker-compose
+   12  chmod a+x /usr/local/bin/docker-compose
+   13  sudo chmod a+x /usr/local/bin/docker-compose
+   14  /usr/local/bin/docker-compose version
+   15  su - vivek_study1
+   16  docker run -it --rm ubuntu bash
+   17  history
+In Docker in
+git clone https://github.com/spurin/diveintoansible-lab.git
+
+ docker-compose up
+
+
+ for user in ansible root
+ do 
+ for os in ubuntu centos 
+ do  
+ for instance in 1 2 3 
+ do 
+ sshpass -f passsword.txt ssh-copy-id -o StrictHostKeyChecking=no ${user}@${os}${instance} 
+ done 
+ done
+done
+
+same username should be there in ansbile control and hosts
+
+Important components of Ansible:
+Modules
+ansible excutables
+ansible playbook executables
+Inventories
+--------------
+
+
+Ansible Configuration:
+Below is the ansible configuration file location ansible uses the highest prority by the order.
+^
+|           ENV variable ANISBLE_CONFIG=
+|Priority   ./ansible.cfg
+|          /home/vivek/.ansible.cfg
+|          /etc/ansible/ansible.cfg
+
+Ansible Inventories:
+Ansible invetory and configuration we can write them in ini format
+In ansible configuration, host_key_checking=false means it will stop asking the yes or no question before ssh into the server 
+ we make groups of of host by adding so that we can call seperate groups
+hosts file is the inventory
+ [centos]
+centos1
+centos2
+centos3
+
+[ubuntu]
+ubuntu1
+ubuntu2
+ubuntu3
+we can also use wilcard but we need to put in quote and -o is to display output in single line
+ansible '*' -m ping -o
+
+To list the hosts
+ansible centos --list-hosts
+
+To use root user in hosts server when host server os is centos we will add anible_user=root in hosts file
+like below
+[centos]
+centos1 anible_user=root  -> direct root
+Here -m --> Module (ping, command [which we can use it execute linux command in host server])
+     -a --> action what type of action does the module do
+     -o --> online dispalu output
+ansible '*' -m command -a 'id' -o
+
+To esclate from asnible user to root we will use below 
+[ubuntu]
+ubuntu1 ansible_become=true ansible_become_password=password
+
+When default ssh ports changes 
+[centos]
+centos1 anible_user=root ansible_port=2222 --> default port to 2222
+or
+[centos]
+centos1:2222 anible_user=root
+
+To user variables in inventory file:
+[centos]
+centos1  ansible_port=2222
+centos[2:3]
+
+[centos:vars]
+ansible_user=root
+
+[ubuntu]
+ubuntu[1:3]
+
+[ubuntu:vars]
+ansible_become=true
+ansible_become_password=password
+
+Ansible Modules:
+Setup module--> used to gather facts when executing playbooks
+File  -->  to create a file in 
+ansible  all -m  file -a 'path=/tmp/test state=touch'  --> to create a file in /tmp dir  using file module
+copy module
+ansible-doc --> which helps to give us man for the module for ex to check man for file module we use ansible-doc file
+
+Ansible-Playbooks:
+Yaml is data orineted language
+---
+Aston:
+  - year: 1949
+  - country: ind
+MAruti:
+  - year: 1949
+  - country: ind
+Mahindra:
+  - year: 1949
+  - country: ind
+Himalayan:
+  - year: 1949
+  - country: ind
+...
+
+
+1. starts with --- ends with ...
+2. Here Aston, MAruti, Mahindra, Himalayan arer  dictonary 
+3. 2 character space need to be given for the list of each dictonary starting with -
+
+---
+# YAML documents begin with the document separator ---
+
+# The minus in YAML this indicates a list item.  The playbook contains a list 
+# of plays, with each play being a dictionary
+-
+
+  # Hosts: where our play will run and options it will run with
+
+  # Vars: variables that will apply to the play, on all target systems
+
+  # Tasks: the list of tasks that will be executed within the play, this section
+  #       can also be used for pre and post tasks
+
+  # Handlers: the list of handlers that are executed as a notify key from a task
+
+  # Roles: list of roles to be imported into the play
+
+# Three dots indicate the end of a YAML document
+...
+setup module in play books used by default if we need to turn off the setup module in playbooks as below.
+  hosts: centos
+  user: root
+  gather_facts: False
+
+variables:
+  vars:
+    motd: "Welcome to CentOS Linux - Ansible Rocks\n"
+
+  tasks:
+    - name: Configure a MOTD (message of the day)
+      copy:
+        content: "{{ motd }}"   --> between quotes and {{ }} brackets
+Here content module directly used to copy or reirect into a file
+
+Handlers: the list of handlers that are executed as a notify key from a task
+
+To delete a file in path using file module 
+ansible all -m file -a 'path=/etc/update-motd.d/60-ansible-motd state=absent' -o
+
+
+In this example playbook, the second task notifies the handler. A single task can notify more than one handler.
+
+- name: Template configuration file
+  ansible.builtin.template:
+    src: template.j2
+    dest: /etc/foo.conf
+  notify:
+    - Restart memcached
+    - Restart apache
+
+  handlers:
+    - name: Restart memcached
+      ansible.builtin.service:
+        name: memcached
+        state: restarted
+
+    - name: Restart apache
+      ansible.builtin.service:
+        name: apache
+        state: restarted
+
+Variables:
+  We can use directories for host variables and group variables in yaml file
+
+Facts:
+---
+-
+  hosts: all
+
+  tasks:
+    - name: Show IP Address
+      debug:
+        msg: "{{ ansible_default_ipv4.address }}"
+...
+
+we can write custom facts , can be written in any language. returns a json format
+By default custom facts expects to use in directory /etc/ansible/facts.d/
+we can see the custom facts using setup module using adhoc commands and we can filter only custom facts by using
+ansible ubuntu-c -m setup -a 'filter=ansible_local'
+
+Playbook modules:
+set_fact
+we can manually set fact in playbook. This module is mainly used  when we use 'when' module
+
+pause
+same sleep in bash
+prompt
+we can combine both pause and prompt
+tasks:
+  - name: Prompt use to verify broswer
+    pause:
+      prompt: please check the webserver, and press enter to continue
+
+wait_for
+
+assemble
+
+add_host
+we can add host in playbook without mentioning in the host column
+
+group_by
+
+fetch
+to capture files from the remote hosts
+
+Dynamic inventories:
+Requirements:
+  needs to be executable
+  accepts the command line options of  --list and --host hostname
+  It will return json encoded dictionary of inventory when we used --list
+  It will return json encoded dictionary strructre for  --host hostname 
+Why we use dynamic inventory
+In a configuration – especially a cloud setup such as AWS where the inventory file keeps constantly changing as you add or decommission servers, keeping tabs on the hosts defined in the inventory file becomes a real challenge.
+It becomes inconvenient going back to the host file and updating the list of hosts with their IP addresses.
